@@ -22,13 +22,9 @@ export async function initColorSearch(allColors: Swatch[]) {
 
     const documents = allColors.map(c => {
         colorMap.set(c.id, c);
-        // Convert oklch to oklab vector
-        const [L, C, h] = c.oklch;
-        // chroma.oklch takes (L, C, h) where h is 0-360
-        const oklab = chroma.oklch(L, C, h).oklab();
         return {
             id: c.id,
-            oklab
+            oklab: c.oklab
         };
     });
 
