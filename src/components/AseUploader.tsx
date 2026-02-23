@@ -1,13 +1,10 @@
 import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { parseASE, type AseColor } from '../util/ase-parser';
+import { parseAse, type AseEntry } from '../util/ase-parser';
 
-export interface AsePalette {
-    colors: AseColor[];
-}
 
 interface AseUploaderProps {
-    onPaletteLoaded: (palette: AsePalette) => void;
+    onPaletteLoaded: (palette: AseEntry[]) => void;
     onError: (error: string) => void;
 }
 
@@ -18,7 +15,7 @@ const AseUploader: React.FC<AseUploaderProps> = ({ onPaletteLoaded, onError }) =
         const files = event.target.files;
         if (!files || files.length === 0) return;
 
-        const allColors: AseColor[] = [];
+        const allColors: AseEntry[] = [];
 
         for (const file of Array.from(files)) {
             if (!file.name.toLowerCase().endsWith('.ase')) {
@@ -35,7 +32,7 @@ const AseUploader: React.FC<AseUploaderProps> = ({ onPaletteLoaded, onError }) =
                 });
 
                 try {
-                    const decoded = parseASE(result);
+                    const decoded = parseAse(result);
                     allColors.push(...decoded);
                 } catch (decodeErr) {
                     console.error(`Decoding error for ${file.name}:`, decodeErr);
@@ -46,7 +43,7 @@ const AseUploader: React.FC<AseUploaderProps> = ({ onPaletteLoaded, onError }) =
         }
 
         if (allColors.length > 0) {
-            onPaletteLoaded({ colors: allColors });
+            onPaletteLoaded(allColors);
         } else {
             onError('No valid colors found in the uploaded files.');
         }

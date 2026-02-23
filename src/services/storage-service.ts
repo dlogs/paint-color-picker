@@ -1,9 +1,9 @@
-import { type AseColor } from '../util/ase-parser';
+import type { Swatch } from './swatch-assets';
 
 const STORAGE_KEY = 'paint-color-picker-palettes';
 
 export const storageService = {
-    savePalettes: (colors: AseColor[]) => {
+    savePalettes: (colors: Swatch[]) => {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(colors));
         } catch (err) {
@@ -11,7 +11,7 @@ export const storageService = {
         }
     },
 
-    loadPalettes: (): AseColor[] => {
+    loadPalettes: (): Swatch[] => {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
             if (stored) {

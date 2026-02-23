@@ -1,91 +1,130 @@
 import chroma from 'chroma-js';
 
-export interface AseColor {
-    id: string;
+export interface AseEntry {
     name: string;
-    mode: string;
-    color: number[];
-    hsl: [number, number, number];
+    color: chroma.Color;
     type: number;
-    brand?: string;
-    collection?: string;
 }
 
-export function parseASE(buffer: ArrayBuffer, brand?: string, collection?: string): AseColor[] {
-    const view = new DataView(buffer);
-    let offset = 0;
+class DataViewWrapper {
+    private view: DataView;
+    offset: number;
+
+    constructor(buffer: ArrayBuffer) {
+        this.view = new DataView(buffer);
+        this.offset = 0;
+    }
+
+    skip(bytes: number): void {
+        this.offset += bytes;
+    }
+
+    done(): boolean {
+        return this.offset >= this.view.byteLength;
+    }
+
+    getUint8(): number {
+        const value = this.view.getUint8(this.offset);
+        this.offset += 1;
+        return value;
+    }
+
+    getUint8Array(length: number): number[] {
+        const value = [];
+        for (let i = 0; i < length; i++) value.push(this.getUint8());
+        return value;
+    }
+
+    getUint16(): number {
+        const value = this.view.getUint16(this.offset);
+        this.offset += 2;
+        return value;
+    }
+
+    getUint32(): number {
+        const value = this.view.getUint32(this.offset);
+        this.offset += 4;
+        return value;
+    }
+
+    getFloat32(): number {
+        const value = this.view.getFloat32(this.offset);
+        this.offset += 4;
+        return value;
+    }
+
+    getFloat32Array(length: number): number[] {
+        const value = [];
+        for (let i = 0; i < length; i++) value.push(this.getFloat32());
+        return value;
+    }
+
+    getFloat32AsByte(): number {
+        const value = this.view.getFloat32(this.offset);
+        this.offset += 4;
+        return Math.round(value * 255);
+    }
+
+    getFloat32ArrayAsBytes(length: number): number[] {
+        const value = [];
+        for (let i = 0; i < length; i++) value.push(this.getFloat32AsByte());
+        return value;
+    }
+}
+
+function readColor(view: DataViewWrapper): chroma.Color {
+    const mode = String.fromCharCode(...view.getUint8Array(4)).trim();
+
+    switch (mode) {
+        case "RGB":
+            return chroma.rgb(...view.getFloat32ArrayAsBytes(3) as [number, number, number]);
+        case "CMYK":
+            return chroma.cmyk(...view.getFloat32ArrayAsBytes(4) as [number, number, number, number]);
+        case "LAB":
+            return chroma.lab(...view.getFloat32Array(3) as [number, number, number]);
+        default:
+            throw new Error(`Unknown color mode: ${mode}`);
+    }
+}
+
+export function parseAse(buffer: ArrayBuffer): AseEntry[] {
+    const view = new DataViewWrapper(buffer);
 
     // Check Signature: "ASEF"
-    const sig = String.fromCharCode(view.getUint8(0), view.getUint8(1), view.getUint8(2), view.getUint8(3));
+    const sig = String.fromCharCode(view.getUint8(), view.getUint8(), view.getUint8(), view.getUint8());
     if (sig !== 'ASEF') throw new Error('Not a valid ASE file');
 
-    offset = 12; // Skip header and version info
-    const colors: AseColor[] = [];
+    view.skip(8); // Skip header and version info
+    const colors: AseEntry[] = [];
 
-    while (offset < buffer.byteLength) {
-        const blockType = view.getUint16(offset);
-        const blockLength = view.getUint32(offset + 2);
-        offset += 6;
+    while (!view.done()) {
+        const blockType = view.getUint16();
+        const blockLength = view.getUint32();
+        const startOffset = view.offset;
+
 
         if (blockType === 0x01 || blockType === 0x0001) { // Color Block
-            const nameLen = view.getUint16(offset);
+            const nameLen = view.getUint16();
             let name = "";
             for (let i = 0; i < nameLen - 1; i++) {
-                name += String.fromCharCode(view.getUint16(offset + 2 + i * 2));
+                name += String.fromCharCode(view.getUint16());
             }
+            view.skip(2); // Skip null terminator
 
-            const colorModeOffset = offset + 2 + (nameLen * 2);
-            const mode = String.fromCharCode(
-                view.getUint8(colorModeOffset),
-                view.getUint8(colorModeOffset + 1),
-                view.getUint8(colorModeOffset + 2),
-                view.getUint8(colorModeOffset + 3)
-            ).trim();
+            const color = readColor(view);
+            const type = view.getUint16();
 
-            let colorVals: number[] = [];
-            let hsl: [number, number, number] = [0, 0, 0];
-            let type = 0;
-
-            if (mode === "RGB") {
-                const r = view.getFloat32(colorModeOffset + 4);
-                const g = view.getFloat32(colorModeOffset + 8);
-                const b = view.getFloat32(colorModeOffset + 12);
-                colorVals = [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-                hsl = chroma(colorVals as [number, number, number]).hsl();
-                type = view.getUint16(colorModeOffset + 16);
-            } else if (mode === "CMYK") {
-                const c = view.getFloat32(colorModeOffset + 4);
-                const m = view.getFloat32(colorModeOffset + 8);
-                const y = view.getFloat32(colorModeOffset + 12);
-                const k = view.getFloat32(colorModeOffset + 16);
-                colorVals = [Math.round(c * 255), Math.round(m * 255), Math.round(y * 255), Math.round(k * 255)];
-                hsl = chroma.cmyk(c, m, y, k).hsl();
-                type = view.getUint16(colorModeOffset + 20);
-            } else if (mode === "LAB") {
-                const l = view.getFloat32(colorModeOffset + 4);
-                const a = view.getFloat32(colorModeOffset + 8);
-                const b = view.getFloat32(colorModeOffset + 12);
-                colorVals = [l, a, b];
-                hsl = chroma.lab(l * 100, a, b).hsl();
-                type = view.getUint16(colorModeOffset + 16);
+            colors.push({
+                name,
+                color,
+                type,
+            });
+            if (view.offset != startOffset + blockLength) {
+                throw new Error(`Block length mismatch. startOffset: ${startOffset}, blockLength: ${blockLength}, view.offset: ${view.offset}, color: ${name}`);
             }
-
-            if (colorVals.length > 0) {
-                if (isNaN(hsl[0])) hsl[0] = 0;
-
-                colors.push({
-                    id: crypto.randomUUID(),
-                    name,
-                    mode,
-                    color: colorVals,
-                    hsl,
-                    type,
-                    brand,
-                    collection
-                });
-            }
+        } else {
+            view.skip(blockLength);
         }
-        offset += blockLength;
     }
     return colors;
 }
