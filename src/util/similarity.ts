@@ -1,64 +1,36 @@
-import { create, insertMultiple, search, type AnyOrama } from '@orama/orama';
 import chroma from 'chroma-js';
 import type { Swatch } from '../services/swatch-assets';
+import { KDTree, type Vec3 } from './kd-tree';
 
-let db: AnyOrama | null = null;
-const colorMap = new Map<string, Swatch>();
+const tree = new KDTree<Swatch>();
 
 /**
- * Initializes the Orama database with the provided colors.
- * Converts OKLCH to OKLab vectors for similarity search.
+ * Builds the KD-tree from the provided swatches using their OKLab coordinates.
+ * Kept async for API compatibility with callers.
  */
-export async function initColorSearch(allColors: Swatch[]) {
-    // Clear existing map
-    colorMap.clear();
-
-    db = await create({
-        schema: {
-            id: 'string',
-            oklab: 'vector[3]'
-        }
-    });
-
-    const documents = allColors.map(c => {
-        colorMap.set(c.id, c);
-        return {
-            id: c.id,
-            oklab: c.oklab
-        };
-    });
-
-    await insertMultiple(db, documents);
+export async function initColorSearch(swatches: Swatch[]): Promise<void> {
+    tree.build(swatches.map(s => ({
+        point: s.oklab as Vec3,
+        data: s,
+    })));
 }
 
 /**
- * Finds the closest color to the target OKLCH values using vector distance in OKLab space.
+ * Finds the closest swatch to the target OKLCH value using KD-tree nearest-neighbor search.
+ * Distance is measured as Euclidean distance in OKLab space (a perceptually uniform metric).
  */
-export async function findClosestColor(targetOklch: [number, number, number], excludeId?: string): Promise<Swatch | null> {
-    if (!db) return null;
-
+export async function findClosestColor(
+    targetOklch: [number, number, number],
+    excludeId?: string
+): Promise<Swatch | null> {
     const [L, C, h] = targetOklch;
-    // Fix for achromatic colors where hue might be NaN
     const safeH = isNaN(h) ? 0 : h;
-    const targetOklab = chroma.oklch(L, C, safeH).oklab();
+    const targetOklab = chroma.oklch(L, C, safeH).oklab() as Vec3;
 
-    const results = await search(db, {
-        mode: 'vector',
-        vector: {
-            value: targetOklab,
-            property: 'oklab'
-        },
-        limit: excludeId ? 2 : 1 // If excluding, get top 2
-    });
+    const result = tree.nearest(
+        targetOklab,
+        excludeId ? (s) => s.id !== excludeId : undefined
+    );
 
-    if (results.hits && results.hits.length > 0) {
-        for (const hit of results.hits) {
-            const doc = hit.document as { id: string };
-            if (doc.id !== excludeId) {
-                return colorMap.get(doc.id) || null;
-            }
-        }
-    }
-
-    return null;
+    return result?.data ?? null;
 }
