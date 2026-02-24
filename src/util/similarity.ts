@@ -1,5 +1,5 @@
 import chroma from 'chroma-js';
-import type { Swatch } from '../services/swatch-assets';
+import type { Swatch } from '../types/swatch';
 import { KDTree, type Vec3 } from './kd-tree';
 
 const tree = new KDTree<Swatch>();

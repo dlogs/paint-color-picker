@@ -1,57 +1,28 @@
 import { useState, useEffect } from 'react'
 import ColorTable from './components/ColorTable'
-import AddPaletteModal from './components/AddPaletteModal'
-import { storageService } from './services/storage-service'
-import { loadBuiltInSwatchs, type Swatch } from './services/swatch-assets'
-import { Button } from './components/ui/button'
+import { fetchBuiltInSwatches } from './services/swatch-provider'
+import type { Swatch } from './types/swatch'
 import ColorDetail from './components/ColorDetail'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { GlobalSearch } from './components/GlobalSearch'
 
 
 function App() {
   const [builtInColors, setBuiltInColors] = useState<Swatch[]>([])
-  const [userColors, setUserColors] = useState<Swatch[]>(() => storageService.loadPalettes())
-  const allColors = [...builtInColors, ...userColors]
+  const allColors = [...builtInColors]
 
   // Load built-in colors from bundled JSON assets
   useEffect(() => {
-    loadBuiltInSwatchs().then(setBuiltInColors)
+    fetchBuiltInSwatches().then(setBuiltInColors)
   }, [])
 
-  // Persist user-added palettes to localStorage
-  useEffect(() => {
-    storageService.savePalettes(userColors)
-  }, [userColors])
-
-  const handlePalettesAdded = (newColors: Swatch[]) => {
-    setUserColors(prev => [...prev, ...newColors])
-  }
-
-  const handleClearAll = () => {
-    if (confirm('Are you sure you want to clear all user-added palettes? Built-in collections will remain.')) {
-      setUserColors([])
-    }
-  }
-
   return (
-    <main className="min-h-screen bg-background text-foreground py-12 px-4 flex flex-col items-center">
-      <div className="w-full max-w-6xl space-y-8">
-        <div className="flex justify-between items-center bg-card p-6 rounded-xl border shadow-sm backdrop-blur-sm">
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold">{allColors.length}</span>
-            <span className="text-muted-foreground uppercase text-xs font-bold tracking-widest text-[10px]">Total Colors</span>
-          </div>
-          <div className="flex gap-4">
-            {userColors.length > 0 && (
-              <Button variant="ghost" onClick={handleClearAll} className="text-muted-foreground hover:text-destructive">
-                Clear User Palettes
-              </Button>
-            )}
-            <AddPaletteModal onPalettesAdded={handlePalettesAdded} />
-          </div>
-        </div>
+    <BrowserRouter>
+      <main className="min-h-screen bg-background text-foreground py-12 px-4 flex flex-col items-center">
+        <div className="w-full max-w-6xl space-y-8">
+          {/* Top Bar with Global Search */}
+          <GlobalSearch colors={allColors} />
 
-        <BrowserRouter>
           <Routes>
             <Route
               path="/"
@@ -79,9 +50,9 @@ function App() {
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </BrowserRouter>
-      </div>
-    </main>
+        </div>
+      </main>
+    </BrowserRouter>
   )
 }
 

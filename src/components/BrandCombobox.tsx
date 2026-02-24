@@ -18,25 +18,13 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-
-const STORAGE_KEY = "brand-combobox-custom-brands"
+import { storageService } from "@/services/storage-service"
 
 const BRANDS = [
     { value: "Benjamin Moore", label: "Benjamin Moore" },
     { value: "Sherwin Williams", label: "Sherwin Williams" },
 ]
 
-function loadCustomBrands(): string[] {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]") as string[]
-    } catch {
-        return []
-    }
-}
-
-function saveCustomBrands(brands: string[]) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(brands))
-}
 
 interface BrandComboboxProps {
     value: string
@@ -47,7 +35,7 @@ interface BrandComboboxProps {
 export function BrandCombobox({ value, onChange, className }: BrandComboboxProps) {
     const [open, setOpen] = React.useState(false)
     const [searchValue, setSearchValue] = React.useState("")
-    const [customBrands, setCustomBrands] = React.useState<string[]>(loadCustomBrands)
+    const [customBrands, setCustomBrands] = React.useState<string[]>(() => storageService.loadCustomBrands())
 
     const allKnownValues = new Set([...BRANDS.map((b) => b.value), ...customBrands])
     const selectedBrand = BRANDS.find((brand) => brand.value === value)
@@ -83,7 +71,7 @@ export function BrandCombobox({ value, onChange, className }: BrandComboboxProps
                                     if (!trimmed) return
                                     const updated = [...customBrands, trimmed]
                                     setCustomBrands(updated)
-                                    saveCustomBrands(updated)
+                                    storageService.saveCustomBrands(updated)
                                     onChange(trimmed)
                                     setOpen(false)
                                 }}
