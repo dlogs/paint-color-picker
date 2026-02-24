@@ -5,7 +5,7 @@ This document provides essential context and rules for AI agents working on the 
 ## Tech Stack & Architecture
 - **Frontend Framework**: React 19, TypeScript, Vite
 - **Styling**: Tailwind CSS v4, `shadcn/ui` components
-- **Routing**: `react-router-dom`
+- **Routing**: `react-router`
 - **Data Tables**: `@tanstack/react-table` combined with a custom intersection-observer hook for infinite scrolling.
 - **Color Processing**: `chroma-js` is used for color permutations (hex to OKLab/OKLCH) and calculating perceivable color differences (Delta-E).
 - **Search Capabilities**: A custom KD-Tree (`src/util/kd-tree.ts` & `src/util/similarity.ts`) is used to rapidly ascertain the closest colors based on OKLab coordinates.

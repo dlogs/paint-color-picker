@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { getPalettes, deletePalette } from '../services/palette-storage';
 import { Button } from './ui/button';
 import { Trash2, Palette as PaletteIcon, ChevronRight } from 'lucide-react';

@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router';
 import { initColorSearch, findClosestColor } from '../util/similarity';
 import type { Swatch } from '@/types/swatch';
 import type { RelationshipMatch } from '@/types/relationships';
