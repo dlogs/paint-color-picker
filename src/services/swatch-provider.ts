@@ -4,8 +4,8 @@ import type { Swatch } from '../types/swatch';
 
 // Import JSON files natively handled by Vite.
 // This bundles them and forces them to load with the JS chunk, eliminating the fetch waterfall.
-import bmColors from '../../public/colors/Benjamin_Moore.json';
-import swColors from '../../public/colors/Sherwin_Williams.json';
+import bmColors from '../../src/colors/Benjamin_Moore.json';
+import swColors from '../../src/colors/Sherwin_Williams.json';
 
 const BRAND_ASSETS = [
     bmColors as unknown as BrandAsset,

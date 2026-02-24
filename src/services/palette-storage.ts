@@ -1,6 +1,8 @@
 import type { Palette } from '../types/palette';
+import Sqids from 'sqids';
 
 const PALETTES_STORAGE_KEY = 'pcp_palettes';
+const sqids = new Sqids({ minLength: 4 });
 
 export function getPalettes(): Palette[] {
     try {
@@ -23,7 +25,7 @@ export function savePalettes(palettes: Palette[]): void {
 export function createPalette(name: string): Palette {
     const palettes = getPalettes();
     const newPalette: Palette = {
-        id: crypto.randomUUID(),
+        id: sqids.encode([getPalettes().length + 1]),
         name,
         createdAt: Date.now(),
         swatches: [],

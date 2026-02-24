@@ -18,7 +18,7 @@ import type { BrandAsset, CollectionAsset, SwatchAsset } from '../src/types/asse
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASE_DIR = path.resolve(__dirname, '..', 'ase-files');
-const OUT_DIR = path.resolve(__dirname, '..', 'public', 'colors');
+const OUT_DIR = path.resolve(__dirname, '..', 'src', 'colors');
 
 
 // ── Filename parsing: "2026_02_22_Classic_Colors.ase" ────────────────────────

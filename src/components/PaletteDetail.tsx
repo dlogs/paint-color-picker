@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router';
 import { ArrowLeft, Trash2, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { getPalettes, removeSwatchFromPalette, moveSwatchInPalette } from '../services/palette-storage';
@@ -88,7 +88,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                                     className="flex-1 min-h-[250px] md:min-h-0 flex flex-col group relative overflow-hidden transition-all duration-300 md:hover:flex-[1.2] border-b md:border-b-0 md:border-r border-background/20 last:border-0"
                                     style={{ backgroundColor: `rgb(${color.rgb.join(',')})` }}
                                 >
-                                    <div className="absolute top-4 left-4 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="absolute top-4 left-4 z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                         {index > 0 && (
                                             <Button
                                                 variant="ghost"
@@ -118,7 +118,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => handleRemove(color.id)}
-                                        className={`absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-black/10 focus:opacity-100 ${contrastText}`}
+                                        className={`absolute top-4 right-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10 hover:bg-black/10 focus:opacity-100 ${contrastText}`}
                                         title="Remove from palette"
                                     >
                                         <Trash2 className="w-4 h-4" />
@@ -149,7 +149,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="mt-6 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                             <Button asChild variant="outline" className="bg-background/20 backdrop-blur hover:bg-background/40 border-0">
                                                 <Link to={`/color/${color.id}`}>View Details</Link>
                                             </Button>
