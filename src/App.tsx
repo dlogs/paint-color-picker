@@ -5,7 +5,14 @@ import type { Swatch } from './types/swatch'
 import ColorDetail from './components/ColorDetail'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { GlobalSearch } from './components/GlobalSearch'
-
+import PaletteList from './components/PaletteList'
+import PaletteDetail from './components/PaletteDetail'
+import { Button } from './components/ui/button'
+import { Link } from 'react-router-dom'
+import { PaletteIcon, SettingsIcon, Menu } from 'lucide-react'
+import Settings from './components/Settings'
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from './components/ui/sheet'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './components/ui/dropdown-menu'
 
 function App() {
   const [builtInColors, setBuiltInColors] = useState<Swatch[]>([])
@@ -20,8 +27,84 @@ function App() {
     <BrowserRouter>
       <main className="min-h-screen bg-background text-foreground py-12 px-4 flex flex-col items-center">
         <div className="w-full max-w-6xl space-y-8">
-          {/* Top Bar with Global Search */}
-          <GlobalSearch colors={allColors} />
+          {/* Top Bar with Global Search and Navigation */}
+          <div className="flex flex-row items-center gap-2 sm:gap-4 w-full">
+            <div className="flex-1 w-full relative">
+              <GlobalSearch colors={allColors} />
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Desktop Buttons */}
+              <div className="hidden sm:flex items-center gap-2">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="h-14 px-6 rounded-xl border-2 bg-card hover:bg-muted font-bold text-lg gap-2">
+                      <PaletteIcon className="w-6 h-6" />
+                      <span>My Palettes</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+                    <SheetHeader className="mb-6">
+                      <SheetTitle className="flex items-center gap-2 text-2xl font-bold">
+                        <PaletteIcon className="w-6 h-6 text-primary" />
+                        My Palettes
+                      </SheetTitle>
+                      <SheetDescription>
+                        View and manage your saved color palettes.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <PaletteList allColors={allColors} />
+                  </SheetContent>
+                </Sheet>
+
+                <Button asChild variant="outline" className="h-14 w-14 rounded-xl border-2 bg-card hover:bg-muted flex items-center justify-center shrink-0">
+                  <Link to="/settings" aria-label="Settings">
+                    <SettingsIcon className="w-6 h-6" />
+                  </Link>
+                </Button>
+              </div>
+
+              {/* Mobile Hamburger Menu */}
+              <div className="sm:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="h-14 w-14 rounded-xl border-2 bg-card hover:bg-muted flex items-center justify-center shrink-0">
+                      <Menu className="w-6 h-6 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl">
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="gap-3 p-3 text-base cursor-pointer rounded-lg font-medium">
+                          <PaletteIcon className="w-5 h-5 text-primary" />
+                          <span>My Palettes</span>
+                        </DropdownMenuItem>
+                      </SheetTrigger>
+                      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+                        <SheetHeader className="mb-6">
+                          <SheetTitle className="flex items-center gap-2 text-2xl font-bold">
+                            <PaletteIcon className="w-6 h-6 text-primary" />
+                            My Palettes
+                          </SheetTitle>
+                          <SheetDescription>
+                            View and manage your saved color palettes.
+                          </SheetDescription>
+                        </SheetHeader>
+                        <PaletteList allColors={allColors} />
+                      </SheetContent>
+                    </Sheet>
+
+                    <DropdownMenuItem asChild className="gap-3 p-3 text-base cursor-pointer rounded-lg font-medium mt-1">
+                      <Link to="/settings">
+                        <SettingsIcon className="w-5 h-5" />
+                        <span>Settings</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          </div>
 
           <Routes>
             <Route
@@ -47,6 +130,14 @@ function App() {
               element={
                 <ColorDetail allColors={allColors} />
               }
+            />
+            <Route
+              path="/settings"
+              element={<Settings allColors={allColors} />}
+            />
+            <Route
+              path="/palette/:paletteId"
+              element={<PaletteDetail allColors={allColors} />}
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

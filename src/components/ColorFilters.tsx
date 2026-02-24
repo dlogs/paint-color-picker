@@ -13,8 +13,6 @@ import { Button } from '@/components/ui/button';
 import { RotateCcw } from 'lucide-react';
 
 interface ColorFiltersProps {
-    brandFilter: string;
-    setBrandFilter: (value: string) => void;
     collectionFilter: string;
     setCollectionFilter: (value: string) => void;
     hueRange: [number, number];
@@ -23,19 +21,16 @@ interface ColorFiltersProps {
     setChromaRange: (value: [number, number]) => void;
     lightnessRange: [number, number];
     setLightnessRange: (value: [number, number]) => void;
-    brands: string[];
     collections: string[];
     maxChroma: number;
     handleReset: () => void;
 }
 
 export function ColorFilters({
-    brandFilter, setBrandFilter,
     collectionFilter, setCollectionFilter,
     hueRange, setHueRange,
     chromaRange, setChromaRange,
     lightnessRange, setLightnessRange,
-    brands,
     collections,
     maxChroma,
     handleReset
@@ -44,20 +39,6 @@ export function ColorFilters({
         <div className="p-6 bg-muted/30 rounded-2xl border space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="space-y-4">
-                    <div>
-                        <Label className="text-muted-foreground mb-2 block text-xs uppercase tracking-wider">Brand</Label>
-                        <Select value={brandFilter} onValueChange={setBrandFilter}>
-                            <SelectTrigger className="bg-background border-input">
-                                <SelectValue placeholder="All Brands" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-popover border-border text-popover-foreground">
-                                <SelectItem value="all">All Brands</SelectItem>
-                                {brands.map(b => (
-                                    <SelectItem key={b} value={b}>{b}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
                     <div>
                         <Label className="text-muted-foreground mb-2 block text-xs uppercase tracking-wider">Collection</Label>
                         <Select value={collectionFilter} onValueChange={setCollectionFilter}>

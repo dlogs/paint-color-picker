@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   useReactTable,
   getCoreRowModel,
@@ -34,12 +33,10 @@ const ColorTable = ({ colors }: ColorTableProps) => {
 
   // Use custom hooks for filters and infinite scroll
   const {
-    brandFilter, setBrandFilter,
     collectionFilter, setCollectionFilter,
     hueRange, setHueRange,
     chromaRange, setChromaRange,
     lightnessRange, setLightnessRange,
-    brands,
     collections,
     maxChroma,
     filteredColors,
@@ -49,7 +46,7 @@ const ColorTable = ({ colors }: ColorTableProps) => {
   const { visibleCount, observerTarget } = useInfiniteScroll({
     totalCount: filteredColors.length,
     pageSize: PAGE_SIZE,
-    resetDeps: [brandFilter, collectionFilter, hueRange, chromaRange, lightnessRange, sorting]
+    resetDeps: [collectionFilter, hueRange, chromaRange, lightnessRange, sorting]
   });
 
   const handleReset = () => {
@@ -97,8 +94,6 @@ const ColorTable = ({ colors }: ColorTableProps) => {
   return (
     <div className="space-y-6 animate-fade-in w-full">
       <ColorFilters
-        brandFilter={brandFilter}
-        setBrandFilter={setBrandFilter}
         collectionFilter={collectionFilter}
         setCollectionFilter={setCollectionFilter}
         hueRange={hueRange}
@@ -107,7 +102,6 @@ const ColorTable = ({ colors }: ColorTableProps) => {
         setChromaRange={setChromaRange}
         lightnessRange={lightnessRange}
         setLightnessRange={setLightnessRange}
-        brands={brands}
         collections={collections}
         maxChroma={maxChroma}
         handleReset={handleReset}
@@ -146,7 +140,7 @@ const ColorTable = ({ colors }: ColorTableProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {visibleRows.map(row => (
           <SwatchCard
             key={row.original.id}

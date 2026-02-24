@@ -5,8 +5,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { initColorSearch, findClosestColor } from '../util/similarity';
 import type { Swatch } from '@/types/swatch';
 import type { RelationshipMatch } from '@/types/relationships';
-import ColorGrid from './ColorGrid';
-
+import SwatchCard from './SwatchCard';
+import { AddToPaletteDialog } from './AddToPaletteDialog';
 
 interface ColorDetailProps {
     allColors: Swatch[];
@@ -16,15 +16,12 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
     const { colorId } = useParams<{ colorId: string }>();
     const navigate = useNavigate();
     const [isOramaReady, setIsOramaReady] = useState(false);
-    const [relationships, setRelationships] = useState<{
-        hue: { above: RelationshipMatch[], below: RelationshipMatch[] },
-        chroma: { above: RelationshipMatch[], below: RelationshipMatch[] },
-        lightness: { above: RelationshipMatch[], below: RelationshipMatch[] }
-    }>({
-        hue: { above: [], below: [] },
-        chroma: { above: [], below: [] },
-        lightness: { above: [], below: [] }
-    });
+    const [activeRel, setActiveRel] = useState<{
+        dim: 'L' | 'C' | 'H',
+        dir: 'above' | 'below',
+        label: string
+    }>({ dim: 'H', dir: 'below', label: 'Warmer' });
+    const [matches, setMatches] = useState<RelationshipMatch[]>([]);
     const [isSearching, setIsSearching] = useState(false);
 
     const color = useMemo(() => allColors.find(c => c.id === colorId), [allColors, colorId]);
@@ -41,21 +38,22 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
 
     const getIncrementalColors = async (
         dimension: 'L' | 'C' | 'H',
-        direction: 'above' | 'below'
+        direction: 'above' | 'below',
+        limit: number = 10
     ): Promise<RelationshipMatch[]> => {
         if (!color || !isOramaReady) return [];
         const [L, C, H] = color.oklch;
         const results: RelationshipMatch[] = [];
         const seenIds = new Set<string>([color.id]);
 
-        const steps = 5;
         const increments = {
-            L: 0.05,
-            C: 0.03,
-            H: 15
+            L: 0.03,
+            C: 0.02,
+            H: 5
         };
 
-        for (let i = 1; i <= steps * 4; i++) { // Search further to find unique colors
+        // Increase search depth to find more results
+        for (let i = 1; i <= limit * 6; i++) {
             let targetL = L;
             let targetC = C;
             let targetH = H;
@@ -80,39 +78,37 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
                 seenIds.add(closest.id);
             }
 
-            if (results.length >= steps) break;
+            if (results.length >= limit) break;
         }
 
         return results;
     };
 
     useEffect(() => {
-        const fetchRelationships = async () => {
+        const fetchMatches = async () => {
             if (!color || !isOramaReady) return;
             setIsSearching(true);
-
-            const [
-                hueAbove, hueBelow,
-                chromaAbove, chromaBelow,
-                lightnessAbove, lightnessBelow
-            ] = await Promise.all([
-                getIncrementalColors('H', 'above'),
-                getIncrementalColors('H', 'below'),
-                getIncrementalColors('C', 'above'),
-                getIncrementalColors('C', 'below'),
-                getIncrementalColors('L', 'above'),
-                getIncrementalColors('L', 'below')
-            ]);
-
-            setRelationships({
-                hue: { above: hueAbove, below: hueBelow },
-                chroma: { above: chromaAbove, below: chromaBelow },
-                lightness: { above: lightnessAbove, below: lightnessBelow }
-            });
+            const res = await getIncrementalColors(activeRel.dim, activeRel.dir, 10);
+            setMatches(res);
             setIsSearching(false);
         };
-        fetchRelationships();
-    }, [color, isOramaReady]);
+        fetchMatches();
+    }, [color, isOramaReady, activeRel]);
+
+    useEffect(() => {
+        if (!color) return;
+        const mainEl = document.querySelector('main');
+        if (mainEl) {
+            mainEl.style.backgroundColor = `rgb(${color.rgb.join(',')})`;
+            mainEl.style.transition = 'background-color 0.5s ease';
+        }
+        return () => {
+            if (mainEl) {
+                mainEl.style.backgroundColor = '';
+                mainEl.style.transition = '';
+            }
+        };
+    }, [color]);
 
     if (!color) {
         return (
@@ -125,86 +121,110 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
         );
     }
 
-
     const [L, C, H] = color.oklch;
+    const isDark = L < 0.6;
+    const textColor = isDark ? 'text-white' : 'text-black';
+    const borderColor = isDark ? 'border-white/20' : 'border-black/10';
 
     return (
-        <div className="w-full max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">
+        <div className={`w-full max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 ${textColor}`}>
             <div className="flex items-center justify-between mb-8">
                 <Link to="/">
-                    <Button variant="ghost" className="text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-full px-6">
+                    <Button variant="ghost" className={`${textColor} ${isDark ? 'hover:bg-white/20' : 'hover:bg-black/10'} hover:text-current rounded-full px-6 backdrop-blur-md`}>
                         <ArrowLeft className="w-4 h-4 mr-2" /> Library
                     </Button>
                 </Link>
+                <div className={isDark ? "dark" : ""}>
+                    <AddToPaletteDialog swatch={color} />
+                </div>
             </div>
 
-            <div className="bg-card rounded-3xl border shadow-2xl overflow-hidden mb-16 ring-1 ring-border/50">
-                <div
-                    className="h-96 relative flex items-end p-12 transition-colors duration-500"
-                    style={{ backgroundColor: `rgb(${color.rgb.join(',')})` }}
-                >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                    <div className="bg-background/40 backdrop-blur-xl p-10 rounded-3xl border border-white/20 shadow-2xl max-w-xl relative z-10 ring-1 ring-black/5">
-                        <h1 className="text-5xl font-black mb-3 tracking-tighter text-foreground">
-                            {color.name}
-                            {color.number && <span className="ml-3 opacity-50 font-medium whitespace-nowrap">({color.number})</span>}
-                        </h1>
-                        <p className="text-lg opacity-90 font-bold mb-8 flex items-center gap-2">
-                            <span className="px-3 py-1 bg-black/5 rounded-full text-xs uppercase tracking-widest">{color.brand}</span>
-                            <span className="opacity-30">/</span>
-                            <span className="text-muted-foreground">{color.collection}</span>
-                        </p>
-                        <div className="grid grid-cols-3 gap-10 pt-8 border-t border-white/10">
-                            <div>
-                                <p className="opacity-50 uppercase text-[10px] tracking-[0.25em] font-black mb-3 text-foreground">Lightness</p>
-                                <p className="text-3xl font-mono font-black leading-none text-foreground">{Math.round(L * 100)}%</p>
-                            </div>
-                            <div>
-                                <p className="opacity-50 uppercase text-[10px] tracking-[0.25em] font-black mb-3 text-foreground">Chroma</p>
-                                <p className="text-3xl font-mono font-black leading-none text-foreground">{C.toFixed(3)}</p>
-                            </div>
-                            <div>
-                                <p className="opacity-50 uppercase text-[10px] tracking-[0.25em] font-black mb-3 text-foreground">Hue</p>
-                                <div
-                                    className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-2xl font-mono font-black text-white shadow-lg border border-white/20 whitespace-nowrap"
-                                    style={{
-                                        backgroundColor: `oklch(70% 0.2 ${Math.round(H)})`,
-                                        textShadow: '0 1px 2px rgba(0,0,0,0.4)'
-                                    }}
-                                >
-                                    {Math.round(H)}°
-                                </div>
-                            </div>
+            <div className="w-full max-w-2xl mb-12 sm:mb-20 pt-4 sm:pt-8 relative z-10">
+                <h1 className="text-4xl sm:text-6xl font-black mb-3 sm:mb-4 tracking-tighter flex flex-wrap items-center gap-3">
+                    <span>{color.name}</span>
+                    {color.number && <span className="opacity-50 font-medium text-2xl sm:text-4xl whitespace-nowrap">({color.number})</span>}
+                </h1>
+                <p className="text-base sm:text-lg opacity-90 font-bold mb-8 sm:mb-12 flex flex-wrap items-center gap-2">
+                    <span className="px-3 py-1.5 bg-black/10 rounded-full text-xs sm:text-sm uppercase tracking-widest leading-none border border-black/5 shadow-inner">
+                        {color.brand}
+                    </span>
+                    <span className="opacity-30 mx-1">/</span>
+                    <span className="opacity-80">{color.collection}</span>
+                </p>
+                <div className={`grid grid-cols-3 gap-4 sm:gap-10 pt-8 sm:pt-10 border-t ${borderColor}`}>
+                    <div>
+                        <p className="opacity-50 uppercase text-[10px] sm:text-xs tracking-widest sm:tracking-[0.25em] font-black mb-2 sm:mb-3">Lightness</p>
+                        <p className="text-3xl sm:text-4xl font-mono font-black leading-none">{Math.round(L * 100)}%</p>
+                    </div>
+                    <div>
+                        <p className="opacity-50 uppercase text-[10px] sm:text-xs tracking-widest sm:tracking-[0.25em] font-black mb-2 sm:mb-3">Chroma</p>
+                        <p className="text-3xl sm:text-4xl font-mono font-black leading-none">{C.toFixed(3)}</p>
+                    </div>
+                    <div>
+                        <p className="opacity-50 uppercase text-[10px] sm:text-xs tracking-widest sm:tracking-[0.25em] font-black mb-2 sm:mb-3">Hue</p>
+                        <div
+                            className="inline-flex items-center justify-center px-4 py-1.5 sm:py-2 rounded-full text-2xl sm:text-3xl font-mono font-black text-white shadow-lg border border-white/20 whitespace-nowrap"
+                            style={{
+                                backgroundColor: `oklch(70% 0.2 ${Math.round(H)})`,
+                                textShadow: '0 1px 2px rgba(0,0,0,0.4)'
+                            }}
+                        >
+                            {Math.round(H)}°
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                <ColorGrid
-                    title="Hue Relationship"
-                    matchesAbove={relationships.hue.above}
-                    matchesBelow={relationships.hue.below}
-                    loading={isSearching}
-                    dimension="H"
-                    mainColor={color}
-                />
-                <ColorGrid
-                    title="Chroma Relationship"
-                    matchesAbove={relationships.chroma.above}
-                    matchesBelow={relationships.chroma.below}
-                    loading={isSearching}
-                    dimension="C"
-                    mainColor={color}
-                />
-                <ColorGrid
-                    title="Lightness Relationship"
-                    matchesAbove={relationships.lightness.above}
-                    matchesBelow={relationships.lightness.below}
-                    loading={isSearching}
-                    dimension="L"
-                    mainColor={color}
-                />
+            <div className="space-y-12">
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                    {[
+                        { dim: 'H', dir: 'below', label: 'Warmer' },
+                        { dim: 'H', dir: 'above', label: 'Cooler' },
+                        { dim: 'C', dir: 'above', label: 'More Vibrant' },
+                        { dim: 'C', dir: 'below', label: 'Less Vibrant' },
+                        { dim: 'L', dir: 'above', label: 'Lighter' },
+                        { dim: 'L', dir: 'below', label: 'Darker' },
+                    ].map((rel) => (
+                        <Button
+                            key={`${rel.dim}-${rel.dir}`}
+                            onClick={() => setActiveRel(rel as any)}
+                            className={`rounded-full px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base font-bold transition-all duration-300 shadow-xl border-0 ${activeRel.dim === rel.dim && activeRel.dir === rel.dir
+                                ? isDark ? 'bg-white text-black scale-105' : 'bg-black text-white scale-105'
+                                : isDark ? 'bg-white/20 hover:bg-white/30 text-white hover:-translate-y-1 backdrop-blur-md' : 'bg-black/10 hover:bg-black/20 text-black hover:-translate-y-1 backdrop-blur-md'
+                                }`}
+                        >
+                            {rel.label}
+                        </Button>
+                    ))}
+                </div>
+
+                <div className="relative overflow-hidden pt-8">
+                    {isSearching && (
+                        <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px] flex items-center justify-center z-10 animate-in fade-in duration-300 rounded-3xl">
+                            <Loader2 className={`w-12 h-12 animate-spin ${textColor}`} />
+                        </div>
+                    )}
+
+                    {matches.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {matches.map((m) => (
+                                <SwatchCard
+                                    key={m.swatch.id}
+                                    swatch={m.swatch}
+                                    targetOklch={m.targetOklch}
+                                    activeDimension={activeRel.dim}
+                                    mainColor={color}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        !isSearching && (
+                            <div className={`py-24 text-center border-2 border-dashed rounded-3xl ${borderColor}`}>
+                                <p className="opacity-70 font-medium italic">No matches found for this criteria.</p>
+                            </div>
+                        )
+                    )}
+                </div>
             </div>
         </div>
     );

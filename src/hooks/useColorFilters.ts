@@ -1,16 +1,19 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { Swatch } from '@/types/swatch';
+import { useGlobalSettings } from '@/hooks/useGlobalSettings';
 
 export function useColorFilters(colors: Swatch[]) {
-    const [brandFilter, setBrandFilter] = useState<string>('all');
     const [collectionFilter, setCollectionFilter] = useState<string>('all');
     const [hueRange, setHueRange] = useState<[number, number]>([0, 360]);
     const [chromaRange, setChromaRange] = useState<[number, number]>([0, 1]);
     const [lightnessRange, setLightnessRange] = useState<[number, number]>([0, 1]);
 
     // Derived filter options
-    const brands = useMemo(() => Array.from(new Set(colors.map(c => c.brand || 'Unknown'))), [colors]);
-    const collections = useMemo(() => Array.from(new Set(colors.map(c => c.collection || 'General'))), [colors]);
+    const collections = useMemo(() => {
+        const unique = new Set<string>();
+        colors.forEach(c => unique.add(`${c.brand} - ${c.collection || 'General'}`));
+        return Array.from(unique);
+    }, [colors]);
 
     // Max chroma from the actual loaded colors (OKLCh C channel)
     const maxChroma = useMemo(() => {
@@ -23,10 +26,16 @@ export function useColorFilters(colors: Swatch[]) {
         setChromaRange([0, maxChroma]);
     }, [maxChroma]);
 
+    const { settings } = useGlobalSettings();
+
     const filteredColors = useMemo(() => {
         return colors.filter(color => {
-            const brandMatch = brandFilter === 'all' || (color.brand || 'Unknown') === brandFilter;
-            const collectionMatch = collectionFilter === 'all' || (color.collection || 'General') === collectionFilter;
+            const collectionId = `${color.brand} - ${color.collection || 'General'}`;
+            if (settings.disabledCollections.includes(collectionId)) {
+                return false;
+            }
+
+            const collectionMatch = collectionFilter === 'all' || collectionId === collectionFilter;
 
             const [okL, okC, okH] = color.oklch;
             const hueMatch = hueRange[0] <= hueRange[1]
@@ -35,12 +44,11 @@ export function useColorFilters(colors: Swatch[]) {
             const chromaMatch = okC >= chromaRange[0] && okC <= chromaRange[1];
             const lightnessMatch = okL >= lightnessRange[0] && okL <= lightnessRange[1];
 
-            return brandMatch && collectionMatch && hueMatch && chromaMatch && lightnessMatch;
+            return collectionMatch && hueMatch && chromaMatch && lightnessMatch;
         });
-    }, [colors, brandFilter, collectionFilter, hueRange, chromaRange, lightnessRange]);
+    }, [colors, settings.disabledCollections, collectionFilter, hueRange, chromaRange, lightnessRange]);
 
     const handleReset = () => {
-        setBrandFilter('all');
         setCollectionFilter('all');
         setHueRange([0, 360]);
         setChromaRange([0, maxChroma]);
@@ -48,12 +56,10 @@ export function useColorFilters(colors: Swatch[]) {
     };
 
     return {
-        brandFilter, setBrandFilter,
         collectionFilter, setCollectionFilter,
         hueRange, setHueRange,
         chromaRange, setChromaRange,
         lightnessRange, setLightnessRange,
-        brands,
         collections,
         maxChroma,
         filteredColors,

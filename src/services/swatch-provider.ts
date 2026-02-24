@@ -2,9 +2,14 @@ import chroma from 'chroma-js';
 import type { BrandAsset } from '../types/assets';
 import type { Swatch } from '../types/swatch';
 
-const BRAND_ASSET_URLS = [
-    '/colors/Benjamin_Moore.json',
-    '/colors/Sherwin_Williams.json',
+// Import JSON files natively handled by Vite.
+// This bundles them and forces them to load with the JS chunk, eliminating the fetch waterfall.
+import bmColors from '../../public/colors/Benjamin_Moore.json';
+import swColors from '../../public/colors/Sherwin_Williams.json';
+
+const BRAND_ASSETS = [
+    bmColors as unknown as BrandAsset,
+    swColors as unknown as BrandAsset,
 ];
 
 // Helper to map DTO to Domain Model
@@ -26,17 +31,13 @@ function mapBrandAssetToSwatches(asset: BrandAsset): Swatch[] {
     );
 }
 
-export async function fetchBuiltInSwatches(): Promise<Swatch[]> {
-    const results = await Promise.allSettled(
-        BRAND_ASSET_URLS.map(url =>
-            fetch(url).then(res => {
-                if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
-                return res.json() as Promise<BrandAsset>;
-            })
-        )
-    );
+let cachedSwatches: Swatch[] | null = null;
 
-    return results.flatMap(r =>
-        r.status === 'fulfilled' ? mapBrandAssetToSwatches(r.value) : []
-    );
+export async function fetchBuiltInSwatches(): Promise<Swatch[]> {
+    if (cachedSwatches) return cachedSwatches;
+
+    // Since we statically imported them, they are available instantly synchronously.
+    cachedSwatches = BRAND_ASSETS.flatMap(asset => mapBrandAssetToSwatches(asset));
+
+    return cachedSwatches;
 }

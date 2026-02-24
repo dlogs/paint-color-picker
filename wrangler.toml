@@ -1,0 +1,9 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "paint-color-picker"
+pages_build_output_dir = "dist"
+
+[vars]
+# Add environment variables here
+
+[pages_build]
+command = "npm run build"

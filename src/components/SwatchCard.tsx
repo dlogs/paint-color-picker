@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import chroma from 'chroma-js';
+import { Plus } from 'lucide-react';
 import type { Swatch } from '@/types/swatch';
-
+import { AddToPaletteDialog } from './AddToPaletteDialog';
 interface SwatchCardProps {
     swatch: Swatch;
     activeDimension?: 'L' | 'C' | 'H';
@@ -65,8 +66,21 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
             {/* Background brightness overlay for contrast */}
             <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${isDark ? 'bg-white' : 'bg-black'}`} />
 
-            <div className="relative flex justify-between items-start mb-6">
-                <div className="min-w-0">
+            <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                    <AddToPaletteDialog
+                        swatch={swatch}
+                        trigger={
+                            <button className={`p-1.5 rounded-full bg-black/10 hover:bg-black/20 backdrop-blur-md border border-white/10 transition-colors ${textColor}`}>
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        }
+                    />
+                </div>
+            </div>
+
+            <div className="relative flex justify-between items-start mb-6 mt-2">
+                <div className="min-w-0 pr-8">
                     <p className={`text-base font-black truncate tracking-tight ${textColor}`}>
                         {swatch.name || 'Unnamed'}
                         {swatch.number && <span className="ml-1 opacity-60 font-medium text-sm">({swatch.number})</span>}
