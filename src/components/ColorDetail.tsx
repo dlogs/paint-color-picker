@@ -10,9 +10,10 @@ import { AddToPaletteDialog } from './AddToPaletteDialog';
 
 interface ColorDetailProps {
     allColors: Swatch[];
+    onAccentChange: (color: string | null, isDark: boolean) => void;
 }
 
-const ColorDetail = ({ allColors }: ColorDetailProps) => {
+const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
     const { colorId } = useParams<{ colorId: string }>();
     const navigate = useNavigate();
     const [isOramaReady, setIsOramaReady] = useState(false);
@@ -95,20 +96,7 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
         fetchMatches();
     }, [color, isOramaReady, activeRel]);
 
-    useEffect(() => {
-        if (!color) return;
-        const mainEl = document.querySelector('main');
-        if (mainEl) {
-            mainEl.style.backgroundColor = `rgb(${color.rgb.join(',')})`;
-            mainEl.style.transition = 'background-color 0.5s ease';
-        }
-        return () => {
-            if (mainEl) {
-                mainEl.style.backgroundColor = '';
-                mainEl.style.transition = '';
-            }
-        };
-    }, [color]);
+
 
     const similarUrl = useMemo(() => {
         if (!color) return '/';
@@ -123,6 +111,15 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
         return `/?hLo=${hLo.toFixed(2)}&hHi=${hHi.toFixed(2)}&cLo=${cLo.toFixed(4)}&cHi=${cHi.toFixed(4)}&lLo=${lLo.toFixed(4)}&lHi=${lHi.toFixed(4)}`;
     }, [color]);
 
+    // Move hooks before early return to satisfy Rules of Hooks
+    const [L, C, H] = color?.oklch ?? [0, 0, 0];
+
+    useEffect(() => {
+        if (!color) return;
+        onAccentChange(`rgb(${color.rgb.join(',')})`, L < 0.6);
+        return () => onAccentChange(null, false);
+    }, [color, onAccentChange, L]);
+
     if (!color) {
         return (
             <div className="flex flex-col items-center justify-center p-24 bg-muted/50 rounded-3xl border-2 border-dashed border-muted">
@@ -134,7 +131,7 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
         );
     }
 
-    const [L, C, H] = color.oklch;
+
     const isDark = L < 0.6;
     const textColor = isDark ? 'text-white' : 'text-black';
     const borderColor = isDark ? 'border-white/20' : 'border-black/10';
@@ -143,7 +140,7 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
         <div className={`w-full max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 ${textColor}`}>
             <div className="flex items-center justify-between mb-8">
                 <Link to="/">
-                    <Button variant="ghost" className={`${textColor} ${isDark ? 'hover:bg-white/20' : 'hover:bg-black/10'} hover:text-current rounded-full px-6 backdrop-blur-md`}>
+                    <Button variant="ghost" className={`${textColor} ${isDark ? 'hover:!bg-white/20' : 'hover:!bg-black/10'} hover:text-current rounded-full px-6 backdrop-blur-md transition-all`}>
                         <ArrowLeft className="w-4 h-4 mr-2" /> Library
                     </Button>
                 </Link>
@@ -151,14 +148,16 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
                     <Link to={similarUrl}>
                         <Button
                             variant="ghost"
-                            className={`${textColor} ${isDark ? 'hover:bg-white/20' : 'hover:bg-black/10'} hover:text-current rounded-full px-4 sm:px-6 backdrop-blur-md font-bold`}
+                            className={`${textColor} ${isDark ? 'hover:!bg-white/20' : 'hover:!bg-black/10'} hover:text-current rounded-full px-4 sm:px-6 backdrop-blur-md font-bold transition-all`}
                         >
                             <Search className="w-4 h-4 mr-2" /> Find Similar
                         </Button>
                     </Link>
-                    <div className={isDark ? "dark" : ""}>
-                        <AddToPaletteDialog swatch={color} />
-                    </div>
+                    <AddToPaletteDialog
+                        swatch={color}
+                        hasAccent={true}
+                        isDarkAccent={isDark}
+                    />
                 </div>
             </div>
 
@@ -210,10 +209,11 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
                     ].map((rel) => (
                         <Button
                             key={`${rel.dim}-${rel.dir}`}
+                            variant="ghost"
                             onClick={() => setActiveRel(rel as any)}
                             className={`rounded-full px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base font-bold transition-all duration-300 shadow-xl border-0 ${activeRel.dim === rel.dim && activeRel.dir === rel.dir
-                                ? isDark ? 'bg-white text-black scale-105' : 'bg-black text-white scale-105'
-                                : isDark ? 'bg-white/20 hover:bg-white/30 text-white hover:-translate-y-1 backdrop-blur-md' : 'bg-black/10 hover:bg-black/20 text-black hover:-translate-y-1 backdrop-blur-md'
+                                ? isDark ? 'bg-white text-black scale-105 hover:!bg-white' : 'bg-black text-white scale-105 hover:!bg-black'
+                                : isDark ? 'bg-white/20 hover:!bg-white/30 text-white hover:-translate-y-1 backdrop-blur-md' : 'bg-black/10 hover:!bg-black/20 text-black hover:-translate-y-1 backdrop-blur-md'
                                 }`}
                         >
                             {rel.label}

@@ -20,13 +20,16 @@ import {
 import { getPalettes, createPalette, addSwatchToPalette } from '../services/palette-storage';
 import type { Palette } from '../types/palette';
 import type { Swatch } from '../types/swatch';
+import { cn } from '@/lib/utils';
 
 interface AddToPaletteDialogProps {
     swatch: Swatch;
     trigger?: React.ReactNode;
+    hasAccent?: boolean;
+    isDarkAccent?: boolean;
 }
 
-export function AddToPaletteDialog({ swatch, trigger }: AddToPaletteDialogProps) {
+export function AddToPaletteDialog({ swatch, trigger, hasAccent, isDarkAccent }: AddToPaletteDialogProps) {
     const [open, setOpen] = useState(false);
     const [palettes, setPalettes] = useState<Palette[]>([]);
     const [selectedPaletteId, setSelectedPaletteId] = useState<string>('new');
@@ -62,7 +65,18 @@ export function AddToPaletteDialog({ swatch, trigger }: AddToPaletteDialogProps)
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 {trigger || (
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button
+                        variant={hasAccent ? "ghost" : "outline"}
+                        size="sm"
+                        className={cn(
+                            "gap-2 rounded-full px-4 font-bold transition-all",
+                            hasAccent
+                                ? (isDarkAccent
+                                    ? "bg-white/10 hover:bg-white/20 text-white border-0 shadow-none backdrop-blur-md"
+                                    : "bg-black/5 hover:bg-black/10 text-black border-0 shadow-none backdrop-blur-md")
+                                : ""
+                        )}
+                    >
                         <Plus className="w-4 h-4" />
                         Add to Palette
                     </Button>

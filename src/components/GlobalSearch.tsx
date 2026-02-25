@@ -13,9 +13,11 @@ import { cn } from "@/lib/utils"
 
 interface GlobalSearchProps {
     colors: Swatch[]
+    hasAccent?: boolean
+    isDarkAccent?: boolean
 }
 
-export function GlobalSearch({ colors }: GlobalSearchProps) {
+export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchProps) {
     const [open, setOpen] = React.useState(false)
     const [value, setValue] = React.useState("")
     const navigate = useNavigate()
@@ -35,7 +37,12 @@ export function GlobalSearch({ colors }: GlobalSearchProps) {
     return (
         <div className="relative w-full max-w-2xl mx-auto">
             <Command
-                className="rounded-xl border shadow-2xl bg-card overflow-visible"
+                className={cn(
+                    "rounded-xl border-2 shadow-2xl overflow-visible transition-all duration-300 backdrop-blur-md",
+                    hasAccent
+                        ? (isDarkAccent ? "bg-white/10 border-white/20 text-white shadow-none [&_[data-slot=command-input-wrapper]]:border-transparent" : "bg-black/5 border-black/10 text-black shadow-none [&_[data-slot=command-input-wrapper]]:border-transparent")
+                        : "bg-card"
+                )}
                 shouldFilter={false} // We handle filtering ourselves for more control
             >
                 <CommandInput
@@ -43,16 +50,26 @@ export function GlobalSearch({ colors }: GlobalSearchProps) {
                     value={value}
                     onValueChange={setValue}
                     onFocus={() => setOpen(true)}
-                    className="h-14 text-lg"
+                    className={cn(
+                        "h-14 text-lg",
+                        hasAccent && (isDarkAccent ? "placeholder:text-white/50" : "placeholder:text-black/40")
+                    )}
                 />
                 {open && value && (
-                    <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-card rounded-xl border shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div
+                        className={cn(
+                            "absolute top-full left-0 right-0 z-50 mt-2 rounded-xl border-2 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl",
+                            hasAccent
+                                ? (isDarkAccent ? "bg-black/80 border-white/20" : "bg-white/80 border-black/20")
+                                : "bg-card"
+                        )}
+                    >
                         <CommandList className="max-h-[min(500px,60vh)] p-2">
-                            <CommandEmpty className="py-12 text-center">
+                            <CommandEmpty className="py-12 text-center text-current">
                                 <div className="text-4xl mb-4 opacity-20">🎨</div>
-                                <p className="text-muted-foreground">No colors found for "{value}"</p>
+                                <p className="opacity-70">No colors found for "{value}"</p>
                             </CommandEmpty>
-                            <CommandGroup heading={`${filteredColors.length} Results`}>
+                            <CommandGroup heading={`${filteredColors.length} Results`} className={hasAccent ? (isDarkAccent ? "[&_[cmdk-group-heading]]:text-white/40" : "[&_[cmdk-group-heading]]:text-black/40") : ""}>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1">
                                     {filteredColors.map((color) => (
                                         <CommandItem
@@ -100,6 +117,7 @@ export function GlobalSearch({ colors }: GlobalSearchProps) {
                     </div>
                 )}
             </Command>
+
 
             {/* Click away listener overlay */}
             {open && (

@@ -17,6 +17,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 function App() {
   const [builtInColors, setBuiltInColors] = useState<Swatch[]>([])
   const allColors = [...builtInColors]
+  const [accentColor, setAccentColor] = useState<string | null>(null)
+  const [isDarkAccent, setIsDarkAccent] = useState(false)
+
+  const textColor = accentColor ? (isDarkAccent ? 'text-white' : 'text-black') : 'text-foreground'
+  const buttonClass = accentColor
+    ? (isDarkAccent
+      ? 'bg-white/10 hover:!bg-white/20 border-white/20 text-white shadow-none'
+      : 'bg-black/5 hover:!bg-black/10 border-black/10 text-black shadow-none')
+    : 'bg-card hover:bg-muted border-2'
 
   // Load built-in colors from bundled JSON assets
   useEffect(() => {
@@ -25,12 +34,15 @@ function App() {
 
   return (
     <BrowserRouter>
-      <main className="min-h-screen bg-background text-foreground py-12 px-4 flex flex-col items-center">
+      <main
+        className="min-h-screen py-12 px-4 flex flex-col items-center transition-colors duration-500"
+        style={{ backgroundColor: accentColor || 'var(--background)' }}
+      >
         <div className="w-full max-w-6xl space-y-8">
           {/* Top Bar with Global Search and Navigation */}
-          <div className="flex flex-row items-center gap-2 sm:gap-4 w-full">
+          <div className={`flex flex-row items-center gap-2 sm:gap-4 w-full ${textColor}`}>
             <div className="flex-1 w-full relative">
-              <GlobalSearch colors={allColors} />
+              <GlobalSearch colors={allColors} hasAccent={!!accentColor} isDarkAccent={isDarkAccent} />
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -38,7 +50,7 @@ function App() {
               <div className="hidden sm:flex items-center gap-2">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" className="h-14 px-6 rounded-xl border-2 bg-card hover:bg-muted font-bold text-lg gap-2">
+                    <Button variant={accentColor ? "ghost" : "outline"} className={`h-14 px-6 rounded-xl font-bold text-lg gap-2 transition-all backdrop-blur-md ${buttonClass}`}>
                       <PaletteIcon className="w-6 h-6" />
                       <span>My Palettes</span>
                     </Button>
@@ -57,7 +69,7 @@ function App() {
                   </SheetContent>
                 </Sheet>
 
-                <Button asChild variant="outline" className="h-14 w-14 rounded-xl border-2 bg-card hover:bg-muted flex items-center justify-center shrink-0">
+                <Button asChild variant={accentColor ? "ghost" : "outline"} className={`h-14 w-14 rounded-xl flex items-center justify-center shrink-0 transition-all backdrop-blur-md ${buttonClass}`}>
                   <Link to="/settings" aria-label="Settings">
                     <SettingsIcon className="w-6 h-6" />
                   </Link>
@@ -68,15 +80,15 @@ function App() {
               <div className="sm:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="h-14 w-14 rounded-xl border-2 bg-card hover:bg-muted flex items-center justify-center shrink-0">
+                    <Button variant={accentColor ? "ghost" : "outline"} className={`h-14 w-14 rounded-xl flex items-center justify-center shrink-0 transition-all backdrop-blur-md ${buttonClass}`}>
                       <Menu className="w-6 h-6 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl">
+                  <DropdownMenuContent align="end" className={`w-56 p-2 rounded-xl backdrop-blur-xl border-2 ${accentColor ? (isDarkAccent ? 'bg-black/80 border-white/20' : 'bg-white/80 border-black/10') : 'bg-popover'}`}>
                     <Sheet>
                       <SheetTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="gap-3 p-3 text-base cursor-pointer rounded-lg font-medium">
-                          <PaletteIcon className="w-5 h-5 text-primary" />
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className={`gap-3 p-3 text-base cursor-pointer rounded-lg font-medium ${textColor} ${accentColor ? (isDarkAccent ? 'hover:!bg-white/10' : 'hover:!bg-black/10') : ''}`}>
+                          <PaletteIcon className={`w-5 h-5 ${accentColor ? textColor : 'text-primary'}`} />
                           <span>My Palettes</span>
                         </DropdownMenuItem>
                       </SheetTrigger>
@@ -94,7 +106,7 @@ function App() {
                       </SheetContent>
                     </Sheet>
 
-                    <DropdownMenuItem asChild className="gap-3 p-3 text-base cursor-pointer rounded-lg font-medium mt-1">
+                    <DropdownMenuItem asChild className={`gap-3 p-3 text-base cursor-pointer rounded-lg font-medium mt-1 ${textColor} ${accentColor ? (isDarkAccent ? 'hover:!bg-white/10' : 'hover:!bg-black/10') : ''}`}>
                       <Link to="/settings">
                         <SettingsIcon className="w-5 h-5" />
                         <span>Settings</span>
@@ -111,7 +123,7 @@ function App() {
               path="/"
               element={
                 allColors.length > 0 ? (
-                  <div className="bg-card rounded-xl border shadow-sm p-6">
+                  <div className={`bg-card rounded-xl border shadow-sm p-6 ${accentColor ? 'hidden' : ''}`}>
                     <ColorTable colors={allColors} />
                   </div>
                 ) : (
@@ -128,7 +140,13 @@ function App() {
             <Route
               path="/color/:colorId"
               element={
-                <ColorDetail allColors={allColors} />
+                <ColorDetail
+                  allColors={allColors}
+                  onAccentChange={(color: string | null, isDark: boolean) => {
+                    setAccentColor(color);
+                    setIsDarkAccent(isDark);
+                  }}
+                />
               }
             />
             <Route
