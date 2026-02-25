@@ -3,6 +3,7 @@ import chroma from 'chroma-js';
 import { Plus } from 'lucide-react';
 import type { Swatch } from '@/types/swatch';
 import { AddToPaletteDialog } from './AddToPaletteDialog';
+import { HuePill } from './HuePill';
 interface SwatchCardProps {
     swatch: Swatch;
     activeDimension?: 'L' | 'C' | 'H';
@@ -114,12 +115,10 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
                 <div>
                     <p className={`text-[8px] uppercase font-black tracking-widest leading-none mb-1 ${subTextColor}`}>H</p>
                     <div className="flex items-center gap-1">
-                        <div
-                            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-mono font-black text-white shadow-sm border border-white/10"
-                            style={{ backgroundColor: `oklch(70% 0.2 ${Math.round(sH)})`, textShadow: '0 1px 1px rgba(0,0,0,0.3)' }}
-                        >
-                            {Math.round(sH)}°
-                        </div>
+                        <HuePill
+                            hue={sH}
+                            className="px-1.5 py-0.5 text-[10px] shadow-sm border-white/10"
+                        />
                         {activeDimension !== 'H' && formatDiff(diffH, '°')}
                     </div>
                 </div>

@@ -7,6 +7,7 @@ import type { Swatch } from '@/types/swatch';
 import type { RelationshipMatch } from '@/types/relationships';
 import SwatchCard from './SwatchCard';
 import { AddToPaletteDialog } from './AddToPaletteDialog';
+import { HuePill } from './HuePill';
 
 interface ColorDetailProps {
     allColors: Swatch[];
@@ -184,15 +185,10 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
                     </div>
                     <div>
                         <p className="opacity-50 uppercase text-[10px] sm:text-xs tracking-widest sm:tracking-[0.25em] font-black mb-2 sm:mb-3">Hue</p>
-                        <div
-                            className="inline-flex items-center justify-center px-4 py-1.5 sm:py-2 rounded-full text-2xl sm:text-3xl font-mono font-black text-white shadow-lg border border-white/20 whitespace-nowrap"
-                            style={{
-                                backgroundColor: `oklch(70% 0.2 ${Math.round(H)})`,
-                                textShadow: '0 1px 2px rgba(0,0,0,0.4)'
-                            }}
-                        >
-                            {Math.round(H)}°
-                        </div>
+                        <HuePill
+                            hue={H}
+                            className="px-4 py-1.5 sm:py-2 text-2xl sm:text-3xl shadow-lg border-white/20"
+                        />
                     </div>
                 </div>
             </div>

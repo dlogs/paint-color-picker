@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { getPalettes, removeSwatchFromPalette, moveSwatchInPalette } from '../services/palette-storage';
 import type { Palette } from '../types/palette';
 import type { Swatch } from '../types/swatch';
+import { HuePill } from './HuePill';
 
 interface PaletteDetailProps {
     allColors: Swatch[];
@@ -124,7 +125,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                                         <Trash2 className="w-4 h-4" />
                                     </Button>
 
-                                    <div className={`mt-auto p-6 flex flex-col items-center text-center bg-gradient-to-t from-black/20 to-transparent pt-12 ${contrastText}`}>
+                                    <div className={`mt-auto p-6 flex flex-col items-center text-center ${contrastText}`}>
                                         <span className={`text-xs font-mono mb-2 px-2 py-1 rounded bg-black/10 backdrop-blur-sm ${contrastBorder}`}>
                                             {color.number}
                                         </span>
@@ -143,9 +144,9 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                                                 <span className={`text-[10px] uppercase font-bold tracking-wider ${contrastMuted}`}>Chroma</span>
                                                 <span className="font-mono">{color.oklch[1].toFixed(3)}</span>
                                             </div>
-                                            <div className="flex flex-col">
+                                            <div className="flex flex-col items-center">
                                                 <span className={`text-[10px] uppercase font-bold tracking-wider ${contrastMuted}`}>Hue</span>
-                                                <span className="font-mono">{Math.round(color.oklch[2])}°</span>
+                                                <HuePill hue={color.oklch[2]} className="px-2 py-0.5 text-xs shadow-sm" />
                                             </div>
                                         </div>
 

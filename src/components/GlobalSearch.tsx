@@ -38,7 +38,7 @@ export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchPr
         <div className="relative w-full max-w-2xl mx-auto">
             <Command
                 className={cn(
-                    "rounded-xl border-2 shadow-2xl overflow-visible transition-all duration-300 backdrop-blur-md",
+                    "relative z-50 rounded-xl border-2 shadow-2xl overflow-visible transition-all duration-300 backdrop-blur-md",
                     hasAccent
                         ? (isDarkAccent ? "bg-white/10 border-white/20 text-white shadow-none [&_[data-slot=command-input-wrapper]]:border-transparent" : "bg-black/5 border-black/10 text-black shadow-none [&_[data-slot=command-input-wrapper]]:border-transparent")
                         : "bg-card"

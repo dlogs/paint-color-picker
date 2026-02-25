@@ -40,7 +40,7 @@ function App() {
       >
         <div className="w-full max-w-6xl space-y-8">
           {/* Top Bar with Global Search and Navigation */}
-          <div className={`flex flex-row items-center gap-2 sm:gap-4 w-full ${textColor}`}>
+          <div className={`flex flex-row items-center gap-2 sm:gap-4 w-full relative z-[100] ${textColor}`}>
             <div className="flex-1 w-full relative">
               <GlobalSearch colors={allColors} hasAccent={!!accentColor} isDarkAccent={isDarkAccent} />
             </div>
