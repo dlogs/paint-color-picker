@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Search } from 'lucide-react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { initColorSearch, findClosestColor } from '../util/similarity';
 import type { Swatch } from '@/types/swatch';
@@ -110,6 +110,19 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
         };
     }, [color]);
 
+    const similarUrl = useMemo(() => {
+        if (!color) return '/';
+        const [L, C, H] = color.oklch;
+        const hLo = (H - 10 + 360) % 360;
+        const hHi = (H + 10 + 360) % 360;
+        const cLo = Math.max(0, C - 0.02);
+        const cHi = C + 0.02;
+        const lLo = Math.max(0, L - 0.05);
+        const lHi = Math.min(1, L + 0.05);
+
+        return `/?hLo=${hLo.toFixed(2)}&hHi=${hHi.toFixed(2)}&cLo=${cLo.toFixed(4)}&cHi=${cHi.toFixed(4)}&lLo=${lLo.toFixed(4)}&lHi=${lHi.toFixed(4)}`;
+    }, [color]);
+
     if (!color) {
         return (
             <div className="flex flex-col items-center justify-center p-24 bg-muted/50 rounded-3xl border-2 border-dashed border-muted">
@@ -134,8 +147,18 @@ const ColorDetail = ({ allColors }: ColorDetailProps) => {
                         <ArrowLeft className="w-4 h-4 mr-2" /> Library
                     </Button>
                 </Link>
-                <div className={isDark ? "dark" : ""}>
-                    <AddToPaletteDialog swatch={color} />
+                <div className="flex items-center gap-2">
+                    <Link to={similarUrl}>
+                        <Button
+                            variant="ghost"
+                            className={`${textColor} ${isDark ? 'hover:bg-white/20' : 'hover:bg-black/10'} hover:text-current rounded-full px-4 sm:px-6 backdrop-blur-md font-bold`}
+                        >
+                            <Search className="w-4 h-4 mr-2" /> Find Similar
+                        </Button>
+                    </Link>
+                    <div className={isDark ? "dark" : ""}>
+                        <AddToPaletteDialog swatch={color} />
+                    </div>
                 </div>
             </div>
 

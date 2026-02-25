@@ -1,8 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import type { Swatch } from '@/types/swatch';
 import { useGlobalSettings } from '@/hooks/useGlobalSettings';
+import { useSearchParams } from 'react-router';
 
 export function useColorFilters(colors: Swatch[]) {
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const [collectionFilter, setCollectionFilter] = useState<string>('all');
     const [hueRange, setHueRange] = useState<[number, number]>([0, 360]);
     const [chromaRange, setChromaRange] = useState<[number, number]>([0, 1]);
@@ -21,10 +24,29 @@ export function useColorFilters(colors: Swatch[]) {
         return Math.ceil(Math.max(...colors.map(c => c.oklch[1])) * 1000) / 1000;
     }, [colors]);
 
-    // Reset chroma range when colors change (new palette loaded)
+    // Initialize from URL params and handle maxChroma fallback
     useEffect(() => {
-        setChromaRange([0, maxChroma]);
-    }, [maxChroma]);
+        const hLo = searchParams.get('hLo');
+        const hHi = searchParams.get('hHi');
+        const cLo = searchParams.get('cLo');
+        const cHi = searchParams.get('cHi');
+        const lLo = searchParams.get('lLo');
+        const lHi = searchParams.get('lHi');
+
+        if (hLo !== null && hHi !== null) {
+            setHueRange([parseFloat(hLo), parseFloat(hHi)]);
+        }
+
+        if (cLo !== null && cHi !== null) {
+            setChromaRange([parseFloat(cLo), parseFloat(cHi)]);
+        } else {
+            setChromaRange([0, maxChroma]);
+        }
+
+        if (lLo !== null && lHi !== null) {
+            setLightnessRange([parseFloat(lLo), parseFloat(lHi)]);
+        }
+    }, [searchParams, maxChroma]);
 
     const { settings } = useGlobalSettings();
 
@@ -53,6 +75,7 @@ export function useColorFilters(colors: Swatch[]) {
         setHueRange([0, 360]);
         setChromaRange([0, maxChroma]);
         setLightnessRange([0, 1]);
+        setSearchParams({});
     };
 
     return {
