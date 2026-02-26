@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useSyncExternalStore } from 'react';
 import { Link } from 'react-router';
-import { getPalettes, deletePalette } from '../services/palette-storage';
+import { getPalettes, subscribe, deletePalette } from '../services/palette-storage';
 import { Button } from './ui/button';
 import { Trash2, Palette as PaletteIcon, ChevronRight } from 'lucide-react';
 import { SheetClose } from '@/components/ui/sheet';
-import type { Palette } from '../types/palette';
 import type { Swatch } from '../types/swatch';
 
 interface PaletteListProps {
@@ -12,18 +11,13 @@ interface PaletteListProps {
 }
 
 export default function PaletteList({ allColors }: PaletteListProps) {
-    const [palettes, setPalettes] = useState<Palette[]>([]);
-
-    useEffect(() => {
-        setPalettes(getPalettes());
-    }, []);
+    const palettes = useSyncExternalStore(subscribe, getPalettes);
 
     const handleDelete = (id: string, e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
         if (confirm('Are you sure you want to delete this palette?')) {
             deletePalette(id);
-            setPalettes(getPalettes());
         }
     };
 

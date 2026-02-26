@@ -56,28 +56,32 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
 
 
     return (
-        <Link
-            to={`/color/${swatch.id}`}
+        <div
             className="group relative flex flex-col p-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-xl border border-white/10 overflow-hidden min-h-[200px]"
             style={{ backgroundColor: `rgb(${swatch.rgb.join(',')})` }}
         >
+            {/* Main Link - Inset pattern to avoid button nesting */}
+            <Link
+                to={`/color/${swatch.id}`}
+                className="absolute inset-0 z-0 cursor-pointer"
+                aria-label={`View details for ${swatch.name}`}
+            />
+
             {/* Background brightness overlay for contrast */}
-            <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity ${isDark ? 'bg-white' : 'bg-black'}`} />
+            <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none ${isDark ? 'bg-white' : 'bg-black'}`} />
 
             <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                    <AddToPaletteDialog
-                        swatch={swatch}
-                        trigger={
-                            <button className={`p-1.5 rounded-full bg-black/10 hover:bg-black/20 backdrop-blur-md border border-white/10 transition-colors ${textColor}`}>
-                                <Plus className="w-4 h-4" />
-                            </button>
-                        }
-                    />
-                </div>
+                <AddToPaletteDialog
+                    swatch={swatch}
+                    trigger={
+                        <button className={`p-1.5 rounded-full bg-black/10 hover:bg-black/20 backdrop-blur-md border border-white/10 transition-colors ${textColor}`}>
+                            <Plus className="w-4 h-4" />
+                        </button>
+                    }
+                />
             </div>
 
-            <div className="relative flex justify-between items-start mb-6 mt-2">
+            <div className="relative z-1 flex justify-between items-start mb-6 mt-2 pointer-events-none">
                 <div className="min-w-0 pr-8">
                     <p className={`text-base font-black truncate tracking-tight ${textColor}`}>
                         {swatch.name || 'Unnamed'}
@@ -94,7 +98,7 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
                 )}
             </div>
 
-            <div className={`relative mt-auto flex flex-wrap gap-2 py-3 border-t ${borderColor} items-center justify-between`}>
+            <div className={`relative z-1 mt-auto flex flex-wrap gap-2 py-3 border-t ${borderColor} items-center justify-between pointer-events-none`}>
                 <StatContainer label="L" subTextColor={subTextColor} borderColor={borderColor}>
                     <span className={`text-xs font-mono font-black ${textColor}`}>{Math.round(sL * 100)}%</span>
                     {activeDimension !== 'L' && <DiffValue diff={mainColor ? diffL : null} unit="%" />}
@@ -114,7 +118,7 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
 
             {/* Target Debug Info */}
             {deltaToTarget !== null && targetOklch && (
-                <div className="relative mt-2 p-2 rounded-xl bg-black/5 backdrop-blur-xl border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="relative z-1 mt-2 p-2 rounded-xl bg-black/5 backdrop-blur-xl border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pointer-events-none">
                     <div className="flex flex-col gap-0.5">
                         <p className={`text-[10px] font-black uppercase tracking-widest opacity-40 ${textColor}`}>Search Target</p>
                         <div className="flex items-center gap-2">
@@ -132,7 +136,7 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
                     </p>
                 </div>
             )}
-        </Link>
+        </div>
     );
 };
 

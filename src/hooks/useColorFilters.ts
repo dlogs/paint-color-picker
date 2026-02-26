@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
 import type { Swatch } from '@/types/swatch';
 import { useGlobalSettings } from '@/hooks/useGlobalSettings';
 import { useSearchParams } from 'react-router';
@@ -6,17 +6,8 @@ import { useSearchParams } from 'react-router';
 export function useColorFilters(colors: Swatch[]) {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const [collectionFilter, setCollectionFilter] = useState<string>('all');
-    const [hueRange, setHueRange] = useState<[number, number]>([0, 360]);
-    const [chromaRange, setChromaRange] = useState<[number, number]>([0, 1]);
-    const [lightnessRange, setLightnessRange] = useState<[number, number]>([0, 1]);
-
-    // Derived filter options
-    const collections = useMemo(() => {
-        const unique = new Set<string>();
-        colors.forEach(c => unique.add(`${c.brand} - ${c.collection || 'General'}`));
-        return Array.from(unique);
-    }, [colors]);
+    // Getters derived from URL
+    const collectionFilter = searchParams.get('col') || 'all';
 
     // Max chroma from the actual loaded colors (OKLCh C channel)
     const maxChroma = useMemo(() => {
@@ -24,29 +15,86 @@ export function useColorFilters(colors: Swatch[]) {
         return Math.ceil(Math.max(...colors.map(c => c.oklch[1])) * 1000) / 1000;
     }, [colors]);
 
-    // Initialize from URL params and handle maxChroma fallback
-    useEffect(() => {
+    const hueRange = useMemo<[number, number]>(() => {
         const hLo = searchParams.get('hLo');
         const hHi = searchParams.get('hHi');
+        return [
+            hLo !== null ? parseFloat(hLo) : 0,
+            hHi !== null ? parseFloat(hHi) : 360
+        ];
+    }, [searchParams]);
+
+    const chromaRange = useMemo<[number, number]>(() => {
         const cLo = searchParams.get('cLo');
         const cHi = searchParams.get('cHi');
+        return [
+            cLo !== null ? parseFloat(cLo) : 0,
+            cHi !== null ? parseFloat(cHi) : maxChroma
+        ];
+    }, [searchParams, maxChroma]);
+
+    const lightnessRange = useMemo<[number, number]>(() => {
         const lLo = searchParams.get('lLo');
         const lHi = searchParams.get('lHi');
+        return [
+            lLo !== null ? parseFloat(lLo) : 0,
+            lHi !== null ? parseFloat(lHi) : 1
+        ];
+    }, [searchParams]);
 
-        if (hLo !== null && hHi !== null) {
-            setHueRange([parseFloat(hLo), parseFloat(hHi)]);
-        }
+    // Setters that update URL
+    const setCollectionFilter = useCallback((val: string) => {
+        setSearchParams(prev => {
+            if (val === 'all') prev.delete('col');
+            else prev.set('col', val);
+            return prev;
+        });
+    }, [setSearchParams]);
 
-        if (cLo !== null && cHi !== null) {
-            setChromaRange([parseFloat(cLo), parseFloat(cHi)]);
-        } else {
-            setChromaRange([0, maxChroma]);
-        }
+    const setHueRange = useCallback((range: [number, number]) => {
+        setSearchParams(prev => {
+            if (range[0] === 0 && range[1] === 360) {
+                prev.delete('hLo');
+                prev.delete('hHi');
+            } else {
+                prev.set('hLo', range[0].toFixed(2));
+                prev.set('hHi', range[1].toFixed(2));
+            }
+            return prev;
+        });
+    }, [setSearchParams]);
 
-        if (lLo !== null && lHi !== null) {
-            setLightnessRange([parseFloat(lLo), parseFloat(lHi)]);
-        }
-    }, [searchParams, maxChroma]);
+    const setChromaRange = useCallback((range: [number, number]) => {
+        setSearchParams(prev => {
+            if (range[0] === 0 && Math.abs(range[1] - maxChroma) < 0.001) {
+                prev.delete('cLo');
+                prev.delete('cHi');
+            } else {
+                prev.set('cLo', range[0].toFixed(4));
+                prev.set('cHi', range[1].toFixed(4));
+            }
+            return prev;
+        });
+    }, [setSearchParams, maxChroma]);
+
+    const setLightnessRange = useCallback((range: [number, number]) => {
+        setSearchParams(prev => {
+            if (range[0] === 0 && range[1] === 1) {
+                prev.delete('lLo');
+                prev.delete('lHi');
+            } else {
+                prev.set('lLo', range[0].toFixed(4));
+                prev.set('lHi', range[1].toFixed(4));
+            }
+            return prev;
+        });
+    }, [setSearchParams]);
+
+    const collections = useMemo(() => {
+        const unique = new Set<string>();
+        colors.forEach(c => unique.add(`${c.brand} - ${c.collection || 'General'}`));
+        return Array.from(unique);
+    }, [colors]);
 
     const { settings } = useGlobalSettings();
 
@@ -70,13 +118,9 @@ export function useColorFilters(colors: Swatch[]) {
         });
     }, [colors, settings.disabledCollections, collectionFilter, hueRange, chromaRange, lightnessRange]);
 
-    const handleReset = () => {
-        setCollectionFilter('all');
-        setHueRange([0, 360]);
-        setChromaRange([0, maxChroma]);
-        setLightnessRange([0, 1]);
+    const handleReset = useCallback(() => {
         setSearchParams({});
-    };
+    }, [setSearchParams]);
 
     return {
         collectionFilter, setCollectionFilter,

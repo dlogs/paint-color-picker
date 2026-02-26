@@ -63,19 +63,20 @@ interface GlobalSearchProps {
 export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchProps) {
     const [open, setOpen] = React.useState(false)
     const [value, setValue] = React.useState("")
+    const deferredValue = React.useDeferredValue(value)
     const navigate = useNavigate()
 
     // We'll limit the search results to keep it performant
     const filteredColors = React.useMemo(() => {
-        if (!value) return []
-        const words = value.toLowerCase().split(/\s+/).filter(Boolean)
+        if (!deferredValue) return []
+        const words = deferredValue.toLowerCase().split(/\s+/).filter(Boolean)
         return colors
             .filter((c) => {
                 const target = `${c.name} ${c.number || ""} ${c.brand}`.toLowerCase()
                 return words.every((word) => target.includes(word))
             })
             .slice(0, 50)
-    }, [colors, value])
+    }, [colors, deferredValue])
 
     return (
         <div className="relative w-full max-w-2xl mx-auto">

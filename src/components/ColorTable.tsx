@@ -1,12 +1,4 @@
 import { useMemo, useState } from 'react';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getSortedRowModel,
-  type SortingState,
-  type ColumnDef,
-} from '@tanstack/react-table';
-import { Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -15,23 +7,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useWindowVirtualizer } from '@tanstack/react-virtual';
 
 import type { Swatch } from '@/types/swatch';
 import { ColorFilters } from './ColorFilters';
 import { useColorFilters } from '@/hooks/useColorFilters';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import SwatchCard from './SwatchCard';
 
 interface ColorTableProps {
   colors: Swatch[];
 }
 
-const PAGE_SIZE = 50;
-
 const ColorTable = ({ colors }: ColorTableProps) => {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sortConfig, setSortConfig] = useState<{ key: string, desc: boolean } | null>(null);
 
-  // Use custom hooks for filters and infinite scroll
   const {
     collectionFilter, setCollectionFilter,
     hueRange, setHueRange,
@@ -43,53 +32,46 @@ const ColorTable = ({ colors }: ColorTableProps) => {
     handleReset: baseReset
   } = useColorFilters(colors);
 
-  const { visibleCount, observerTarget } = useInfiniteScroll({
-    totalCount: filteredColors.length,
-    pageSize: PAGE_SIZE,
-    resetDeps: [collectionFilter, hueRange, chromaRange, lightnessRange, sorting]
-  });
-
   const handleReset = () => {
     baseReset();
-    setSorting([]);
+    setSortConfig(null);
   };
 
-  const columns = useMemo<ColumnDef<Swatch, any>[]>(() => [
-    {
-      accessorKey: 'name',
-      id: 'name',
-    },
-    {
-      accessorKey: 'brand',
-      id: 'brand',
-    },
-    {
-      accessorFn: row => Math.round(row.oklch[2]),
-      id: 'hue',
-    },
-    {
-      accessorFn: row => row.oklch[1],
-      id: 'chroma',
-    },
-    {
-      accessorFn: row => row.oklch[0],
-      id: 'lightness',
-    },
-  ], []);
+  const sortedColors = useMemo(() => {
+    if (!sortConfig) return filteredColors;
 
-  const table = useReactTable({
-    data: filteredColors,
-    columns,
-    state: {
-      sorting,
-    },
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    return [...filteredColors].sort((a, b) => {
+      let valA: any, valB: any;
+
+      switch (sortConfig.key) {
+        case 'name':
+          valA = a.name; valB = b.name; break;
+        case 'brand':
+          valA = a.brand; valB = b.brand; break;
+        case 'hue':
+          valA = a.oklch[2]; valB = b.oklch[2]; break;
+        case 'chroma':
+          valA = a.oklch[1]; valB = b.oklch[1]; break;
+        case 'lightness':
+          valA = a.oklch[0]; valB = b.oklch[0]; break;
+        default: return 0;
+      }
+
+      if (valA < valB) return sortConfig.desc ? 1 : -1;
+      if (valA > valB) return sortConfig.desc ? -1 : 1;
+      return 0;
+    });
+  }, [filteredColors, sortConfig]);
+
+  // Responsive grid: 1 col (sm), 2 col (md), 3 col (lg)
+  const columns = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 3;
+  const rowCount = Math.ceil(sortedColors.length / columns);
+
+  const rowVirtualizer = useWindowVirtualizer({
+    count: rowCount,
+    estimateSize: () => 240, // height of a card + gap
+    overscan: 5,
   });
-
-  const allRows = table.getRowModel().rows;
-  const visibleRows = useMemo(() => allRows.slice(0, visibleCount), [allRows, visibleCount]);
 
   return (
     <div className="space-y-6 animate-fade-in w-full">
@@ -110,18 +92,18 @@ const ColorTable = ({ colors }: ColorTableProps) => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div className="flex items-center gap-4">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-            {filteredColors.length} Colors Found
+            {sortedColors.length} Colors Found
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mr-2">Sort By</Label>
           <Select
-            value={sorting[0]?.id || 'none'}
+            value={sortConfig?.key || 'none'}
             onValueChange={(val) => {
               if (val === 'none') {
-                setSorting([]);
+                setSortConfig(null);
               } else {
-                setSorting([{ id: val, desc: val === 'chroma' || val === 'lightness' }]);
+                setSortConfig({ key: val, desc: val === 'chroma' || val === 'lightness' });
               }
             }}
           >
@@ -140,38 +122,47 @@ const ColorTable = ({ colors }: ColorTableProps) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {visibleRows.map(row => (
-          <SwatchCard
-            key={row.original.id}
-            swatch={row.original}
-          />
-        ))}
+      <div
+        className="relative w-full"
+        style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+      >
+        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const startIndex = virtualRow.index * columns;
+          const rowSwatches = sortedColors.slice(startIndex, startIndex + columns);
 
-        {filteredColors.length === 0 && (
-          <div className="col-span-full p-24 text-center bg-muted/10 rounded-3xl border-2 border-dashed border-muted/20">
+          return (
+            <div
+              key={virtualRow.key}
+              className="absolute top-0 left-0 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {rowSwatches.map((swatch) => (
+                <SwatchCard
+                  key={swatch.id}
+                  swatch={swatch}
+                />
+              ))}
+            </div>
+          );
+        })}
+
+        {sortedColors.length === 0 && (
+          <div className="p-24 text-center bg-muted/10 rounded-3xl border-2 border-dashed border-muted/20">
             <div className="text-4xl mb-4 opacity-20">🔍</div>
             <p className="text-muted-foreground font-medium">No colors match your current filters.</p>
           </div>
         )}
       </div>
 
-      <div
-        ref={observerTarget}
-        className="flex items-center justify-center p-12 text-muted-foreground"
-      >
-        {visibleCount < filteredColors.length ? (
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span className="text-xs font-bold uppercase tracking-widest opacity-50">Loading more colors</span>
-          </div>
-        ) : filteredColors.length > 0 && (
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-1 rounded-full bg-border/20 mb-4" />
-            <span className="text-[10px] uppercase tracking-[0.3em] opacity-30 font-black">End of Library</span>
-          </div>
-        )}
-      </div>
+      {sortedColors.length > 0 && rowVirtualizer.getTotalSize() > 0 && (
+        <div className="flex flex-col items-center gap-2 pt-12">
+          <div className="w-12 h-1 rounded-full bg-border/20 mb-4" />
+          <span className="text-[10px] uppercase tracking-[0.3em] opacity-30 font-black">End of Library</span>
+        </div>
+      )}
     </div>
   );
 };

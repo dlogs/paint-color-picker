@@ -4,6 +4,21 @@ import Sqids from 'sqids';
 const PALETTES_STORAGE_KEY = 'pcp_palettes';
 const sqids = new Sqids({ minLength: 4 });
 
+// Reactivity system
+type Listener = () => void;
+let listeners: Listener[] = [];
+
+function notify() {
+    listeners.forEach(l => l());
+}
+
+export function subscribe(listener: Listener) {
+    listeners.push(listener);
+    return () => {
+        listeners = listeners.filter(l => l !== listener);
+    };
+}
+
 export function getPalettes(): Palette[] {
     try {
         const data = localStorage.getItem(PALETTES_STORAGE_KEY);
@@ -17,6 +32,7 @@ export function getPalettes(): Palette[] {
 export function savePalettes(palettes: Palette[]): void {
     try {
         localStorage.setItem(PALETTES_STORAGE_KEY, JSON.stringify(palettes));
+        notify();
     } catch (e) {
         console.error('Failed to save palettes to local storage', e);
     }
@@ -25,7 +41,7 @@ export function savePalettes(palettes: Palette[]): void {
 export function createPalette(name: string): Palette {
     const palettes = getPalettes();
     const newPalette: Palette = {
-        id: sqids.encode([getPalettes().length + 1]),
+        id: sqids.encode([palettes.length + 1 + Date.now() % 1000]), // Add salt to avoid collisions on quick creation
         name,
         createdAt: Date.now(),
         swatches: [],
