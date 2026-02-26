@@ -1,9 +1,31 @@
 import { Link } from 'react-router';
-import chroma from 'chroma-js';
 import { Plus } from 'lucide-react';
 import type { Swatch } from '@/types/swatch';
 import { AddToPaletteDialog } from './AddToPaletteDialog';
 import { HuePill } from './HuePill';
+import { calculateDeltaE, calculateDeltaEFromOklch } from '@/util/similarity';
+
+const DiffValue = ({ diff, unit = '' }: { diff: number | null, unit?: string }) => {
+    if (!diff || diff === 0) return null;
+    const sign = diff > 0 ? '+' : '';
+    return <span className="opacity-60 ml-1 text-[10px] font-bold">({sign}{diff}{unit})</span>;
+};
+
+const DiffValueC = ({ diff }: { diff: number | null }) => {
+    if (!diff || Math.abs(diff) < 0.001) return null;
+    const sign = diff > 0 ? '+' : '';
+    return <span className="opacity-60 ml-1 text-[10px] font-bold">({sign}{diff.toFixed(3)})</span>;
+};
+
+const StatContainer = ({ label, subTextColor, borderColor, children }: { label: string, subTextColor: string, borderColor: string, children: React.ReactNode }) => (
+    <div className="flex items-center gap-1.5 min-w-0">
+        <p className={`text-[10px] uppercase font-black tracking-widest leading-none ${subTextColor}`}>{label}</p>
+        <div className={`flex items-center gap-1 border-l ${borderColor} pl-1.5 min-w-0 flex-1`}>
+            {children}
+        </div>
+    </div>
+);
+
 interface SwatchCardProps {
     swatch: Swatch;
     activeDimension?: 'L' | 'C' | 'H';
@@ -15,24 +37,10 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
     const [sL, sC, sH] = swatch.oklch;
 
     // Delta-E to the MAIN color (if provided)
-    const deltaToMain = mainColor ? Math.sqrt(
-        Math.pow(swatch.oklab[0] - mainColor.oklab[0], 2) +
-        Math.pow(swatch.oklab[1] - mainColor.oklab[1], 2) +
-        Math.pow(swatch.oklab[2] - mainColor.oklab[2], 2)
-    ) * 100 : null;
+    const deltaToMain = mainColor ? calculateDeltaE(swatch.oklab as [number, number, number], mainColor.oklab as [number, number, number]) : null;
 
     // Delta-E to the SEARCH TARGET (if provided)
-    const deltaToTarget = targetOklch ? (() => {
-        const tL = targetOklch[0];
-        const tC = targetOklch[1];
-        const tH = targetOklch[2];
-        const targetOklab = chroma.oklch(tL, tC, tH).oklab();
-        return Math.sqrt(
-            Math.pow(swatch.oklab[0] - targetOklab[0], 2) +
-            Math.pow(swatch.oklab[1] - targetOklab[1], 2) +
-            Math.pow(swatch.oklab[2] - targetOklab[2], 2)
-        ) * 100;
-    })() : null;
+    const deltaToTarget = targetOklch ? calculateDeltaEFromOklch(targetOklch, swatch.oklab as [number, number, number]) : null;
 
     const isDark = sL < 0.6;
     const textColor = isDark ? 'text-white' : 'text-black';
@@ -46,17 +54,6 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
     if (diffH > 180) diffH -= 360;
     if (diffH < -180) diffH += 360;
 
-    const formatDiff = (d: number, unit: string = '') => {
-        if (d === 0 || !mainColor) return null;
-        const sign = d > 0 ? '+' : '';
-        return <span className="opacity-60 ml-1 text-[9px] font-bold">({sign}{d}{unit})</span>;
-    };
-
-    const formatDiffC = (d: number) => {
-        if (Math.abs(d) < 0.001 || !mainColor) return null;
-        const sign = d > 0 ? '+' : '';
-        return <span className="opacity-60 ml-1 text-[9px] font-bold">({sign}{d.toFixed(3)})</span>;
-    };
 
     return (
         <Link
@@ -90,56 +87,47 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
                 </div>
                 {deltaToMain !== null && (
                     <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
-                        <p className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/10 backdrop-blur-md border border-white/10 ${textColor}`}>
+                        <p className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/10 backdrop-blur-md border border-white/10 ${textColor}`}>
                             ΔE {deltaToMain.toFixed(2)}
                         </p>
                     </div>
                 )}
             </div>
 
-            <div className={`relative mt-auto grid grid-cols-3 gap-2 py-3 border-t ${borderColor} items-center`}>
-                <div>
-                    <p className={`text-[8px] uppercase font-black tracking-widest leading-none mb-1 ${subTextColor}`}>L</p>
-                    <p className={`text-xs font-mono font-black border-l ${borderColor} pl-1.5 ${textColor}`}>
-                        {Math.round(sL * 100)}%
-                        {activeDimension !== 'L' && formatDiff(diffL, '%')}
-                    </p>
-                </div>
-                <div>
-                    <p className={`text-[8px] uppercase font-black tracking-widest leading-none mb-1 ${subTextColor}`}>C</p>
-                    <p className={`text-xs font-mono font-black border-l ${borderColor} pl-1.5 ${textColor}`}>
-                        {sC.toFixed(3)}
-                        {activeDimension !== 'C' && formatDiffC(diffC)}
-                    </p>
-                </div>
-                <div>
-                    <p className={`text-[8px] uppercase font-black tracking-widest leading-none mb-1 ${subTextColor}`}>H</p>
-                    <div className="flex items-center gap-1">
-                        <HuePill
-                            hue={sH}
-                            className="px-1.5 py-0.5 text-[10px] shadow-sm border-white/10"
-                        />
-                        {activeDimension !== 'H' && formatDiff(diffH, '°')}
-                    </div>
-                </div>
+            <div className={`relative mt-auto flex flex-wrap gap-2 py-3 border-t ${borderColor} items-center justify-between`}>
+                <StatContainer label="L" subTextColor={subTextColor} borderColor={borderColor}>
+                    <span className={`text-xs font-mono font-black ${textColor}`}>{Math.round(sL * 100)}%</span>
+                    {activeDimension !== 'L' && <DiffValue diff={mainColor ? diffL : null} unit="%" />}
+                </StatContainer>
+                <StatContainer label="C" subTextColor={subTextColor} borderColor={borderColor}>
+                    <span className={`text-xs font-mono font-black ${textColor}`}>{sC.toFixed(3)}</span>
+                    {activeDimension !== 'C' && <DiffValueC diff={mainColor ? diffC : null} />}
+                </StatContainer>
+                <StatContainer label="H" subTextColor={subTextColor} borderColor={borderColor}>
+                    <HuePill
+                        hue={sH}
+                        className="px-1.5 py-0.5 text-[10px] shadow-sm border-white/10"
+                    />
+                    {activeDimension !== 'H' && <DiffValue diff={mainColor ? diffH : null} unit="°" />}
+                </StatContainer>
             </div>
 
             {/* Target Debug Info */}
             {deltaToTarget !== null && targetOklch && (
-                <div className="relative mt-2 p-2 rounded-xl bg-black/5 backdrop-blur-xl border border-white/5 flex items-center justify-between gap-3">
+                <div className="relative mt-2 p-2 rounded-xl bg-black/5 backdrop-blur-xl border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex flex-col gap-0.5">
-                        <p className={`text-[7px] font-black uppercase tracking-widest opacity-40 ${textColor}`}>Search Target</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest opacity-40 ${textColor}`}>Search Target</p>
                         <div className="flex items-center gap-2">
                             <div
                                 className="w-3.5 h-3.5 rounded-full border border-white/40 shadow-inner"
                                 style={{ backgroundColor: `oklch(${targetOklch[0] * 100}% ${targetOklch[1]} ${targetOklch[2]})` }}
                             />
-                            <p className={`text-[9px] font-mono font-bold tracking-tight ${textColor}`}>
+                            <p className={`text-[10px] font-mono font-bold tracking-tight ${textColor}`}>
                                 {Math.round(targetOklch[0] * 100)}% · {targetOklch[1].toFixed(2)} · {Math.round(targetOklch[2])}°
                             </p>
                         </div>
                     </div>
-                    <p className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-black/10 border border-white/5 ${textColor}`}>
+                    <p className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-black/10 border border-white/5 ${textColor}`}>
                         ΔE {deltaToTarget.toFixed(2)}
                     </p>
                 </div>

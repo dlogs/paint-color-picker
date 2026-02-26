@@ -66,15 +66,11 @@ export function AddToPaletteDialog({ swatch, trigger, hasAccent, isDarkAccent }:
             <DialogTrigger asChild>
                 {trigger || (
                     <Button
-                        variant={hasAccent ? "ghost" : "outline"}
+                        variant={hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "outline"}
                         size="sm"
                         className={cn(
                             "gap-2 rounded-full px-4 font-bold transition-all",
-                            hasAccent
-                                ? (isDarkAccent
-                                    ? "bg-white/10 hover:bg-white/20 text-white border-0 shadow-none backdrop-blur-md"
-                                    : "bg-black/5 hover:bg-black/10 text-black border-0 shadow-none backdrop-blur-md")
-                                : ""
+                            hasAccent ? "border-0" : ""
                         )}
                     >
                         <Plus className="w-4 h-4" />

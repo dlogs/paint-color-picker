@@ -107,7 +107,7 @@ const ColorTable = ({ colors }: ColorTableProps) => {
         handleReset={handleReset}
       />
 
-      <div className="flex items-center justify-between pb-2">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div className="flex items-center gap-4">
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             {filteredColors.length} Colors Found

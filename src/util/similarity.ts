@@ -34,3 +34,22 @@ export async function findClosestColor(
 
     return result?.data ?? null;
 }
+
+/**
+ * Calculates the Euclidean distance between two OKLab colors, multiplying by 100 to match standard Delta-E.
+ */
+export function calculateDeltaE(oklab1: [number, number, number], oklab2: [number, number, number]): number {
+    return Math.sqrt(
+        Math.pow(oklab1[0] - oklab2[0], 2) +
+        Math.pow(oklab1[1] - oklab2[1], 2) +
+        Math.pow(oklab1[2] - oklab2[2], 2)
+    ) * 100;
+}
+
+/**
+ * Calculates the Euclidean distance between a target OKLCH and an OKLab color.
+ */
+export function calculateDeltaEFromOklch(targetOklch: [number, number, number], oklab2: [number, number, number]): number {
+    const targetOklab = chroma.oklch(targetOklch[0], targetOklch[1], targetOklch[2]).oklab();
+    return calculateDeltaE(targetOklab as [number, number, number], oklab2);
+}

@@ -10,6 +10,49 @@ import {
 } from "@/components/ui/command"
 import type { Swatch } from "@/types/swatch"
 import { cn } from "@/lib/utils"
+import { cva } from "class-variance-authority"
+
+const searchWrapperVariants = cva(
+    "relative z-40 rounded-xl border-2 shadow-2xl transition-all duration-300 backdrop-blur-md",
+    {
+        variants: {
+            variant: {
+                default: "bg-card",
+                adaptiveLight: "bg-white/10 border-white/20 text-white shadow-none [&_[data-slot=command-input-wrapper]]:border-transparent",
+                adaptiveDark: "bg-black/5 border-black/10 text-black shadow-none [&_[data-slot=command-input-wrapper]]:border-transparent"
+            }
+        },
+        defaultVariants: { variant: "default" }
+    }
+);
+
+const searchInputVariants = cva(
+    "h-14 text-lg",
+    {
+        variants: {
+            variant: {
+                default: "",
+                adaptiveLight: "placeholder:text-white/50",
+                adaptiveDark: "placeholder:text-black/40"
+            }
+        },
+        defaultVariants: { variant: "default" }
+    }
+);
+
+const searchDropdownVariants = cva(
+    "absolute top-full left-0 right-0 z-40 mt-2 rounded-xl border-2 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl",
+    {
+        variants: {
+            variant: {
+                default: "bg-card",
+                adaptiveLight: "bg-black/80 border-white/20",
+                adaptiveDark: "bg-white/80 border-black/20"
+            }
+        },
+        defaultVariants: { variant: "default" }
+    }
+);
 
 interface GlobalSearchProps {
     colors: Swatch[]
@@ -37,12 +80,7 @@ export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchPr
     return (
         <div className="relative w-full max-w-2xl mx-auto">
             <Command
-                className={cn(
-                    "relative z-50 rounded-xl border-2 shadow-2xl overflow-visible transition-all duration-300 backdrop-blur-md",
-                    hasAccent
-                        ? (isDarkAccent ? "bg-white/10 border-white/20 text-white shadow-none [&_[data-slot=command-input-wrapper]]:border-transparent" : "bg-black/5 border-black/10 text-black shadow-none [&_[data-slot=command-input-wrapper]]:border-transparent")
-                        : "bg-card"
-                )}
+                className={searchWrapperVariants({ variant: hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "default" })}
                 shouldFilter={false} // We handle filtering ourselves for more control
             >
                 <CommandInput
@@ -50,20 +88,10 @@ export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchPr
                     value={value}
                     onValueChange={setValue}
                     onFocus={() => setOpen(true)}
-                    className={cn(
-                        "h-14 text-lg",
-                        hasAccent && (isDarkAccent ? "placeholder:text-white/50" : "placeholder:text-black/40")
-                    )}
+                    className={searchInputVariants({ variant: hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "default" })}
                 />
                 {open && value && (
-                    <div
-                        className={cn(
-                            "absolute top-full left-0 right-0 z-50 mt-2 rounded-xl border-2 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl",
-                            hasAccent
-                                ? (isDarkAccent ? "bg-black/80 border-white/20" : "bg-white/80 border-black/20")
-                                : "bg-card"
-                        )}
-                    >
+                    <div className={searchDropdownVariants({ variant: hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "default" })}>
                         <CommandList className="max-h-[min(500px,60vh)] p-2">
                             <CommandEmpty className="py-12 text-center text-current">
                                 <div className="text-4xl mb-4 opacity-20">🎨</div>
@@ -122,7 +150,7 @@ export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchPr
             {/* Click away listener overlay */}
             {open && (
                 <div
-                    className="fixed inset-0 z-40 bg-transparent"
+                    className="fixed inset-0 z-30 bg-transparent"
                     onClick={() => setOpen(false)}
                 />
             )}

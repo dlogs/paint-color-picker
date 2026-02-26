@@ -8,11 +8,19 @@ import type { RelationshipMatch } from '@/types/relationships';
 import SwatchCard from './SwatchCard';
 import { AddToPaletteDialog } from './AddToPaletteDialog';
 import { HuePill } from './HuePill';
+import { cn } from '@/lib/utils';
 
 interface ColorDetailProps {
     allColors: Swatch[];
     onAccentChange: (color: string | null, isDark: boolean) => void;
 }
+
+const StatBlock = ({ label, children }: { label: string, children: React.ReactNode }) => (
+    <div>
+        <p className="opacity-50 uppercase text-[10px] sm:text-xs tracking-widest sm:tracking-[0.25em] font-black mb-2 sm:mb-3">{label}</p>
+        <div className="text-3xl sm:text-4xl font-mono font-black leading-none">{children}</div>
+    </div>
+);
 
 const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
     const { colorId } = useParams<{ colorId: string }>();
@@ -141,15 +149,18 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
         <div className={`w-full max-w-6xl animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 ${textColor}`}>
             <div className="flex items-center justify-between mb-8">
                 <Link to="/">
-                    <Button variant="ghost" className={`${textColor} ${isDark ? 'hover:!bg-white/20' : 'hover:!bg-black/10'} hover:text-current rounded-full px-6 backdrop-blur-md transition-all`}>
+                    <Button
+                        variant={isDark ? "adaptiveLight" : "adaptiveDark"}
+                        className="rounded-full px-6 transition-all"
+                    >
                         <ArrowLeft className="w-4 h-4 mr-2" /> Library
                     </Button>
                 </Link>
                 <div className="flex items-center gap-2">
                     <Link to={similarUrl}>
                         <Button
-                            variant="ghost"
-                            className={`${textColor} ${isDark ? 'hover:!bg-white/20' : 'hover:!bg-black/10'} hover:text-current rounded-full px-4 sm:px-6 backdrop-blur-md font-bold transition-all`}
+                            variant={isDark ? "adaptiveLight" : "adaptiveDark"}
+                            className="rounded-full px-4 sm:px-6 font-bold transition-all"
                         >
                             <Search className="w-4 h-4 mr-2" /> Find Similar
                         </Button>
@@ -175,21 +186,18 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
                     <span className="opacity-80">{color.collection}</span>
                 </p>
                 <div className={`grid grid-cols-3 gap-4 sm:gap-10 pt-8 sm:pt-10 border-t ${borderColor}`}>
-                    <div>
-                        <p className="opacity-50 uppercase text-[10px] sm:text-xs tracking-widest sm:tracking-[0.25em] font-black mb-2 sm:mb-3">Lightness</p>
-                        <p className="text-3xl sm:text-4xl font-mono font-black leading-none">{Math.round(L * 100)}%</p>
-                    </div>
-                    <div>
-                        <p className="opacity-50 uppercase text-[10px] sm:text-xs tracking-widest sm:tracking-[0.25em] font-black mb-2 sm:mb-3">Chroma</p>
-                        <p className="text-3xl sm:text-4xl font-mono font-black leading-none">{C.toFixed(3)}</p>
-                    </div>
-                    <div>
-                        <p className="opacity-50 uppercase text-[10px] sm:text-xs tracking-widest sm:tracking-[0.25em] font-black mb-2 sm:mb-3">Hue</p>
+                    <StatBlock label="Lightness">
+                        {Math.round(L * 100)}%
+                    </StatBlock>
+                    <StatBlock label="Chroma">
+                        {C.toFixed(3)}
+                    </StatBlock>
+                    <StatBlock label="Hue">
                         <HuePill
                             hue={H}
                             className="px-4 py-1.5 sm:py-2 text-2xl sm:text-3xl shadow-lg border-white/20"
                         />
-                    </div>
+                    </StatBlock>
                 </div>
             </div>
 
@@ -205,12 +213,17 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
                     ].map((rel) => (
                         <Button
                             key={`${rel.dim}-${rel.dir}`}
-                            variant="ghost"
+                            variant={isDark ? "adaptiveLight" : "adaptiveDark"}
                             onClick={() => setActiveRel(rel as any)}
-                            className={`rounded-full px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base font-bold transition-all duration-300 shadow-xl border-0 ${activeRel.dim === rel.dim && activeRel.dir === rel.dir
-                                ? isDark ? 'bg-white text-black scale-105 hover:!bg-white' : 'bg-black text-white scale-105 hover:!bg-black'
-                                : isDark ? 'bg-white/20 hover:!bg-white/30 text-white hover:-translate-y-1 backdrop-blur-md' : 'bg-black/10 hover:!bg-black/20 text-black hover:-translate-y-1 backdrop-blur-md'
-                                }`}
+                            className={cn(
+                                "rounded-full px-6 sm:px-8 py-4 sm:py-6 text-sm sm:text-base font-bold transition-all duration-300 shadow-xl",
+                                activeRel.dim === rel.dim && activeRel.dir === rel.dir
+                                    ? [
+                                        "scale-105",
+                                        isDark ? "bg-white text-black hover:bg-white" : "bg-black text-white hover:bg-black"
+                                    ]
+                                    : "hover:-translate-y-1"
+                            )}
                         >
                             {rel.label}
                         </Button>
