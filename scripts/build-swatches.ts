@@ -12,7 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import Sqids from "sqids";
+
 import { parseAse } from "../src/util/ase-parser";
 import type { BrandAsset, CollectionAsset } from "../src/types/assets";
 
@@ -36,10 +36,30 @@ function parseFilename(filename: string): { retrievalDate: string; collection: s
 
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
-let index = 0;
-const sqids = new Sqids({ minLength: 8 });
-function getId() {
-  return sqids.encode([index++]);
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "") // Remove non-word characters (except spaces and hyphens)
+    .replace(/[\s_]+/g, "-") // Replace spaces and underscores with hyphens
+    .replace(/^-+|-+$/g, ""); // Trim hyphens from ends
+}
+
+function generateColorId(brand: string, name: string, number?: string): string {
+  const brandSlug = slugify(brand)
+    .replace("sherwin-williams", "sw")
+    .replace("benjamin-moore", "bm")
+    .replace("behr", "behr")
+    .replace("farrow-ball", "fb")
+    .replace("valspar", "val");
+
+  let colorPart = number ? slugify(number) : slugify(name);
+
+  // Avoid redundant prefixes (e.g., "sw-sw-1234" -> "sw-1234")
+  if (colorPart.startsWith(`${brandSlug}-`)) {
+    return colorPart;
+  }
+
+  return `${brandSlug}-${colorPart}`;
 }
 
 const brandDirs = fs
@@ -86,7 +106,7 @@ function readCollectionAseFile(filename: string, brandDir: string, brand: string
     swatches: parseAse(buf.buffer).map((color) => {
       const { name, number } = parseColorName(color.name, brand);
       return {
-        id: getId(),
+        id: generateColorId(brand, name, number),
         name,
         number,
         hex: color.color.hex(),

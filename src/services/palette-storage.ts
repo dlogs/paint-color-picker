@@ -77,6 +77,23 @@ export function addSwatchToPalette(paletteId: string, swatchId: string): void {
   }
 }
 
+export function addSwatchesToPalette(paletteId: string, swatchIds: string[]): void {
+  const palettes = getPalettes();
+  const palette = palettes.find((p) => p.id === paletteId);
+  if (palette) {
+    let changed = false;
+    for (const swatchId of swatchIds) {
+      if (!palette.swatches.includes(swatchId)) {
+        palette.swatches.push(swatchId);
+        changed = true;
+      }
+    }
+    if (changed) {
+      savePalettes(palettes);
+    }
+  }
+}
+
 export function removeSwatchFromPalette(paletteId: string, swatchId: string): void {
   const palettes = getPalettes();
   const palette = palettes.find((p) => p.id === paletteId);

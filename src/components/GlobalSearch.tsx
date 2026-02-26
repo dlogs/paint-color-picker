@@ -62,28 +62,30 @@ interface GlobalSearchProps {
 export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchProps) {
   const [open, setOpen] = React.useState(false);
   const [value, setValue] = React.useState("");
-  const deferredValue = React.useDeferredValue(value);
   const navigate = useNavigate();
 
-  // We'll limit the search results to keep it performant
+  // Manual filtering for the best control and performance over ~2000 items
   const filteredColors = React.useMemo(() => {
-    if (!deferredValue) return [];
-    const words = deferredValue.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!value) return [];
+    const query = value.toLowerCase().split(/\s+/).filter(Boolean);
     return colors
       .filter((c) => {
         const target = `${c.name} ${c.number || ""} ${c.brand}`.toLowerCase();
-        return words.every((word) => target.includes(word));
+        return query.every((word) => target.includes(word));
       })
       .slice(0, 50);
-  }, [colors, deferredValue]);
+  }, [colors, value]);
 
   return (
     <div className="relative w-full max-w-2xl mx-auto">
       <Command
-        className={searchWrapperVariants({
-          variant: hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "default",
-        })}
-        shouldFilter={false} // We handle filtering ourselves for more control
+        className={cn(
+          "overflow-visible",
+          searchWrapperVariants({
+            variant: hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "default",
+          }),
+        )}
+        shouldFilter={false} // We handle filtering ourselves
       >
         <CommandInput
           placeholder="Search colors by name or number (e.g. 'White Dove' or 'SW 7005')..."
@@ -101,62 +103,72 @@ export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchPr
             })}
           >
             <CommandList className="max-h-[min(500px,60vh)] p-2">
-              <CommandEmpty className="py-12 text-center text-current">
-                <div className="text-4xl mb-4 opacity-20">🎨</div>
-                <p className="opacity-70">No colors found for "{value}"</p>
+              <CommandEmpty>
+                <div className="py-12 text-center text-current">
+                  <div className="text-4xl mb-4 opacity-20">🎨</div>
+                  <p className="opacity-70">No colors found for "{value}"</p>
+                </div>
               </CommandEmpty>
               <CommandGroup
                 heading={`${filteredColors.length} Results`}
-                className={
+                className={cn(
+                  "gap-1",
                   hasAccent
                     ? isDarkAccent
                       ? "[&_[cmdk-group-heading]]:text-white/40"
                       : "[&_[cmdk-group-heading]]:text-black/40"
-                    : ""
-                }
+                    : "",
+                )}
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-1">
-                  {filteredColors.map((color) => (
-                    <CommandItem
-                      key={color.id}
-                      value={`${color.name} ${color.number || ""}`}
-                      onSelect={() => {
-                        navigate(`/color/${color.id}`);
-                        setOpen(false);
-                        setValue("");
-                      }}
-                      className="p-0 aria-selected:bg-transparent" // Disable default backdrop
+                {filteredColors.map((color) => (
+                  <CommandItem
+                    key={color.id}
+                    value={`${color.name} ${color.number || ""} ${color.brand}`}
+                    onSelect={() => {
+                      navigate(`/color/${color.id}`);
+                      setOpen(false);
+                      setValue("");
+                    }}
+                    className="p-0 mb-1 aria-selected:bg-transparent data-[selected=true]:bg-transparent"
+                  >
+                    <div
+                      className={cn(
+                        "w-full flex items-center gap-4 p-3 rounded-lg border border-white/10 transition-all hover:scale-[1.01] cursor-pointer group relative overflow-hidden active:scale-95",
+                        // Selection style for keyboard nav
+                        "group-data-[selected=true]:ring-2 group-data-[selected=true]:ring-primary/50",
+                      )}
+                      style={{ backgroundColor: `rgb(${color.rgb.join(",")})` }}
                     >
+                      {/* Contrast overlay */}
                       <div
-                        className="w-full flex items-center gap-4 p-3 rounded-lg border border-white/10 transition-all hover:scale-[1.02] cursor-pointer group relative overflow-hidden active:scale-95"
-                        style={{ backgroundColor: `rgb(${color.rgb.join(",")})` }}
-                      >
-                        {/* Contrast overlay */}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+                        className={cn(
+                          "absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors",
+                          "group-data-[selected=true]:bg-black/10",
+                        )}
+                      />
 
-                        <div
-                          className={cn(
-                            "relative z-10 flex flex-col min-w-0 px-1 py-0.5 rounded-md",
-                            // Contrast helper based on lightness
-                            color.oklch[0] < 0.6 ? "text-white" : "text-black",
-                          )}
-                        >
-                          <span className="font-bold truncate text-sm">{color.name}</span>
-                          <div className="flex items-center gap-2 opacity-70">
-                            {color.number && (
-                              <span className="text-[10px] font-mono leading-none border-r border-current pr-2">
-                                {color.number}
-                              </span>
-                            )}
-                            <span className="text-[10px] uppercase tracking-wider font-bold truncate">
-                              {color.brand}
+                      <div
+                        className={cn(
+                          "relative z-10 flex flex-col min-w-0 px-1 py-0.5 rounded-md",
+                          // Contrast helper based on lightness
+                          color.oklch[0] < 0.6 ? "text-white" : "text-black",
+                        )}
+                      >
+                        <span className="font-bold truncate text-sm">{color.name}</span>
+                        <div className="flex items-center gap-2 opacity-70">
+                          {color.number && (
+                            <span className="text-[10px] font-mono leading-none border-r border-current pr-2">
+                              {color.number}
                             </span>
-                          </div>
+                          )}
+                          <span className="text-[10px] uppercase tracking-wider font-bold truncate">
+                            {color.brand}
+                          </span>
                         </div>
                       </div>
-                    </CommandItem>
-                  ))}
-                </div>
+                    </div>
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </CommandList>
           </div>

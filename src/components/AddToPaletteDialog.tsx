@@ -69,11 +69,7 @@ export function AddToPaletteDialog({
   const DialogTriggerButton = trigger || (
     <Button
       variant={hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "outline"}
-      size="sm"
-      className={cn(
-        "gap-2 rounded-full px-4 font-bold transition-all",
-        hasAccent ? "border-0" : "",
-      )}
+      className={cn("gap-2 rounded-full px-6 font-bold transition-all")}
     >
       <Plus className="w-4 h-4" />
       {swatchesToSave.length > 1 ? "Save Palette" : "Add to Palette"}

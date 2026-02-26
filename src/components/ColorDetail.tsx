@@ -137,7 +137,13 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
         <p className="text-muted-foreground mb-8">
           This color may have been removed or the ID is invalid.
         </p>
-        <Button onClick={() => navigate("/")}>Back to Library</Button>
+        <Button
+          variant="outline"
+          className="rounded-full px-6 font-bold transition-all"
+          onClick={() => navigate("/")}
+        >
+          Back to Library
+        </Button>
       </div>
     );
   }
@@ -154,7 +160,7 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
         <Link to="/">
           <Button
             variant={isDark ? "adaptiveLight" : "adaptiveDark"}
-            className="rounded-full px-6 transition-all"
+            className="rounded-full px-6 font-bold transition-all"
           >
             <ArrowLeft className="w-4 h-4 mr-2" /> Library
           </Button>
