@@ -239,7 +239,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                         >
                           Light
                         </span>
-                        <span className="font-mono">{color.oklch[0].toFixed(2)}</span>
+                        <span className="font-mono">{Math.round(color.oklch[0] * 100)}%</span>
                       </div>
                       <div className="flex flex-col">
                         <span

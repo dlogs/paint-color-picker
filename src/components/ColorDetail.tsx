@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "./ui/button";
+import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { useParams, Link, useNavigate } from "react-router";
 import { initColorSearch, findClosestColor } from "../util/similarity";
@@ -35,6 +36,7 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
   }>({ dim: "H", dir: "below", label: "Warmer" });
   const [matches, setMatches] = useState<RelationshipMatch[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const { settings } = useGlobalSettings();
 
   const color = useMemo(() => allColors.find((c) => c.id === colorId), [allColors, colorId]);
 
@@ -81,7 +83,11 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
         targetH = (H + sign * delta + 360) % 360;
       }
 
-      const closest = await findClosestColor([targetL, targetC, targetH], color.id);
+      const closest = await findClosestColor([targetL, targetC, targetH], (s) => {
+        if (s.id === color.id) return false;
+        const collectionId = `${s.brand} - ${s.collection || "General"}`;
+        return !settings.disabledCollections.includes(collectionId);
+      });
       if (closest && !seenIds.has(closest.id)) {
         results.push({
           swatch: closest,

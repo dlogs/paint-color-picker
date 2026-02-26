@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router";
+import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import {
   Command,
   CommandEmpty,
@@ -64,17 +65,24 @@ export function GlobalSearch({ colors, hasAccent, isDarkAccent }: GlobalSearchPr
   const [value, setValue] = React.useState("");
   const navigate = useNavigate();
 
+  const { settings } = useGlobalSettings();
+
   // Manual filtering for the best control and performance over ~2000 items
   const filteredColors = React.useMemo(() => {
     if (!value) return [];
     const query = value.toLowerCase().split(/\s+/).filter(Boolean);
     return colors
       .filter((c) => {
+        const collectionId = `${c.brand} - ${c.collection || "General"}`;
+        if (settings.disabledCollections.includes(collectionId)) {
+          return false;
+        }
+
         const target = `${c.name} ${c.number || ""} ${c.brand}`.toLowerCase();
         return query.every((word) => target.includes(word));
       })
       .slice(0, 50);
-  }, [colors, value]);
+  }, [colors, value, settings.disabledCollections]);
 
   return (
     <div className="relative w-full max-w-2xl mx-auto">

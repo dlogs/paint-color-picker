@@ -13,6 +13,7 @@ import type { Swatch } from "@/types/swatch";
 import { ColorFilters } from "./ColorFilters";
 import { useColorFilters } from "@/hooks/useColorFilters";
 import SwatchCard from "./SwatchCard";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface ColorTableProps {
   colors: Swatch[];
@@ -22,15 +23,12 @@ const ColorTable = ({ colors }: ColorTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; desc: boolean } | null>(null);
 
   const {
-    collectionFilter,
-    setCollectionFilter,
     hueRange,
     setHueRange,
     chromaRange,
     setChromaRange,
     lightnessRange,
     setLightnessRange,
-    collections,
     maxChroma,
     filteredColors,
     handleReset: baseReset,
@@ -79,27 +77,27 @@ const ColorTable = ({ colors }: ColorTableProps) => {
   }, [filteredColors, sortConfig]);
 
   // Responsive grid: 1 col (sm), 2 col (md), 3 col (lg)
-  const columns = window.innerWidth < 640 ? 1 : window.innerWidth < 1024 ? 2 : 3;
+  const isSm = useMediaQuery("(min-width: 640px)");
+  const isLg = useMediaQuery("(min-width: 1024px)");
+  const columns = isLg ? 3 : isSm ? 2 : 1;
+
   const rowCount = Math.ceil(sortedColors.length / columns);
 
   const rowVirtualizer = useWindowVirtualizer({
     count: rowCount,
-    estimateSize: () => 240, // height of a card + gap
+    estimateSize: () => 272, // height of a card (240) + gap (32)
     overscan: 5,
   });
 
   return (
     <div className="space-y-6 animate-fade-in w-full">
       <ColorFilters
-        collectionFilter={collectionFilter}
-        setCollectionFilter={setCollectionFilter}
         hueRange={hueRange}
         setHueRange={setHueRange}
         chromaRange={chromaRange}
         setChromaRange={setChromaRange}
         lightnessRange={lightnessRange}
         setLightnessRange={setLightnessRange}
-        collections={collections}
         maxChroma={maxChroma}
         handleReset={handleReset}
       />
@@ -115,25 +113,37 @@ const ColorTable = ({ colors }: ColorTableProps) => {
             Sort By
           </Label>
           <Select
-            value={sortConfig?.key || "none"}
+            value={
+              sortConfig
+                ? ["hue", "chroma", "lightness"].includes(sortConfig.key)
+                  ? `${sortConfig.key}-${sortConfig.desc ? "desc" : "asc"}`
+                  : sortConfig.key
+                : "none"
+            }
             onValueChange={(val) => {
               if (val === "none") {
                 setSortConfig(null);
+              } else if (val.includes("-")) {
+                const [key, dir] = val.split("-");
+                setSortConfig({ key, desc: dir === "desc" });
               } else {
-                setSortConfig({ key: val, desc: val === "chroma" || val === "lightness" });
+                setSortConfig({ key: val, desc: false });
               }
             }}
           >
-            <SelectTrigger className="w-[160px] h-9 text-xs bg-muted/50 border-white/5 rounded-full px-4">
+            <SelectTrigger className="w-[200px] h-9 text-xs bg-muted/50 border-white/5 rounded-full px-4">
               <SelectValue placeholder="Default" />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border">
               <SelectItem value="none">Default</SelectItem>
               <SelectItem value="name">Name</SelectItem>
               <SelectItem value="brand">Brand</SelectItem>
-              <SelectItem value="hue">Hue</SelectItem>
-              <SelectItem value="chroma">Chroma (Highest)</SelectItem>
-              <SelectItem value="lightness">Lightness (Brightest)</SelectItem>
+              <SelectItem value="hue-asc">Hue (0° → 360°)</SelectItem>
+              <SelectItem value="hue-desc">Hue (360° → 0°)</SelectItem>
+              <SelectItem value="chroma-desc">Chroma (Most Vibrant)</SelectItem>
+              <SelectItem value="chroma-asc">Chroma (Most Muted)</SelectItem>
+              <SelectItem value="lightness-desc">Lightness (Brightest)</SelectItem>
+              <SelectItem value="lightness-asc">Lightness (Darkest)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -147,9 +157,10 @@ const ColorTable = ({ colors }: ColorTableProps) => {
           return (
             <div
               key={virtualRow.key}
-              className="absolute top-0 left-0 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+              data-index={virtualRow.index}
+              ref={rowVirtualizer.measureElement}
+              className="absolute top-0 left-0 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 pb-8"
               style={{
-                height: `${virtualRow.size}px`,
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >

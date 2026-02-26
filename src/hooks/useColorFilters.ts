@@ -6,9 +6,6 @@ import { useSearchParams } from "react-router";
 export function useColorFilters(colors: Swatch[]) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Getters derived from URL
-  const collectionFilter = searchParams.get("col") || "all";
-
   // Max chroma from the actual loaded colors (OKLCh C channel)
   const maxChroma = useMemo(() => {
     if (colors.length === 0) return 0.4;
@@ -34,17 +31,6 @@ export function useColorFilters(colors: Swatch[]) {
   }, [searchParams]);
 
   // Setters that update URL
-  const setCollectionFilter = useCallback(
-    (val: string) => {
-      setSearchParams((prev) => {
-        if (val === "all") prev.delete("col");
-        else prev.set("col", val);
-        return prev;
-      });
-    },
-    [setSearchParams],
-  );
-
   const setHueRange = useCallback(
     (range: [number, number]) => {
       setSearchParams((prev) => {
@@ -93,12 +79,6 @@ export function useColorFilters(colors: Swatch[]) {
     [setSearchParams],
   );
 
-  const collections = useMemo(() => {
-    const unique = new Set<string>();
-    colors.forEach((c) => unique.add(`${c.brand} - ${c.collection || "General"}`));
-    return Array.from(unique);
-  }, [colors]);
-
   const { settings } = useGlobalSettings();
 
   const filteredColors = useMemo(() => {
@@ -108,8 +88,6 @@ export function useColorFilters(colors: Swatch[]) {
         return false;
       }
 
-      const collectionMatch = collectionFilter === "all" || collectionId === collectionFilter;
-
       const [okL, okC, okH] = color.oklch;
       const hueMatch =
         hueRange[0] <= hueRange[1]
@@ -118,31 +96,21 @@ export function useColorFilters(colors: Swatch[]) {
       const chromaMatch = okC >= chromaRange[0] && okC <= chromaRange[1];
       const lightnessMatch = okL >= lightnessRange[0] && okL <= lightnessRange[1];
 
-      return collectionMatch && hueMatch && chromaMatch && lightnessMatch;
+      return hueMatch && chromaMatch && lightnessMatch;
     });
-  }, [
-    colors,
-    settings.disabledCollections,
-    collectionFilter,
-    hueRange,
-    chromaRange,
-    lightnessRange,
-  ]);
+  }, [colors, settings.disabledCollections, hueRange, chromaRange, lightnessRange]);
 
   const handleReset = useCallback(() => {
     setSearchParams({});
   }, [setSearchParams]);
 
   return {
-    collectionFilter,
-    setCollectionFilter,
     hueRange,
     setHueRange,
     chromaRange,
     setChromaRange,
     lightnessRange,
     setLightnessRange,
-    collections,
     maxChroma,
     filteredColors,
     handleReset,

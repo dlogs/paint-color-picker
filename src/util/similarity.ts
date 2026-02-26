@@ -23,13 +23,13 @@ export async function initColorSearch(swatches: Swatch[]): Promise<void> {
  */
 export async function findClosestColor(
   targetOklch: [number, number, number],
-  excludeId?: string,
+  predicate?: (swatch: Swatch) => boolean,
 ): Promise<Swatch | null> {
   const [L, C, h] = targetOklch;
   const safeH = isNaN(h) ? 0 : h;
   const targetOklab = chroma.oklch(L, C, safeH).oklab() as Vec3;
 
-  const result = tree.nearest(targetOklab, excludeId ? (s) => s.id !== excludeId : undefined);
+  const result = tree.nearest(targetOklab, predicate);
 
   return result?.data ?? null;
 }
