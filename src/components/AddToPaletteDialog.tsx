@@ -1,141 +1,159 @@
-import { useState, useCallback } from "react";
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Plus, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "./ui/drawer";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { getPalettes, createPalette, addSwatchToPalette } from "../services/palette-storage";
+import {
+  getPalettes,
+  createPalette,
+  addSwatchToPalette,
+  addSwatchesToPalette,
+} from "../services/palette-storage";
 import type { Palette } from "../types/palette";
 import type { Swatch } from "../types/swatch";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface AddToPaletteDialogProps {
-  swatch: Swatch;
+  swatch?: Swatch;
+  swatches?: Swatch[];
   trigger?: React.ReactNode;
   hasAccent?: boolean;
   isDarkAccent?: boolean;
+  defaultName?: string;
 }
 
 export function AddToPaletteDialog({
   swatch,
+  swatches,
   trigger,
   hasAccent,
   isDarkAccent,
+  defaultName,
 }: AddToPaletteDialogProps) {
   const [open, setOpen] = useState(false);
   const [palettes, setPalettes] = useState<Palette[]>([]);
-  const [selectedPaletteId, setSelectedPaletteId] = useState<string>("new");
   const [newPaletteName, setNewPaletteName] = useState("");
+  const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  const loadPalettes = useCallback(() => {
-    setPalettes(getPalettes());
-  }, []);
+  const swatchesToSave = swatches || (swatch ? [swatch] : []);
 
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (isOpen) {
-      loadPalettes();
-      setSelectedPaletteId("new");
-      setNewPaletteName("");
+      setPalettes(getPalettes());
+      setNewPaletteName(defaultName || "");
     }
   };
 
-  const handleSave = () => {
-    let targetPaletteId = selectedPaletteId;
-
-    if (selectedPaletteId === "new") {
-      if (!newPaletteName.trim()) return;
-      const newPalette = createPalette(newPaletteName.trim());
-      targetPaletteId = newPalette.id;
+  const saveToPalette = (paletteId: string) => {
+    if (swatchesToSave.length === 0) return;
+    if (swatchesToSave.length === 1) {
+      addSwatchToPalette(paletteId, swatchesToSave[0].id);
+    } else {
+      addSwatchesToPalette(
+        paletteId,
+        swatchesToSave.map((s) => s.id),
+      );
     }
-
-    addSwatchToPalette(targetPaletteId, swatch.id);
     setOpen(false);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button
-            variant={hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "outline"}
-            size="sm"
-            className={cn(
-              "gap-2 rounded-full px-4 font-bold transition-all",
-              hasAccent ? "border-0" : "",
-            )}
-          >
-            <Plus className="w-4 h-4" />
-            Add to Palette
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Add to Palette</DialogTitle>
-        </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSave();
+  const createAndSave = () => {
+    if (!newPaletteName.trim() || swatchesToSave.length === 0) return;
+    const newPalette = createPalette(newPaletteName.trim());
+    saveToPalette(newPalette.id);
+  };
+
+  const DialogTriggerButton = trigger || (
+    <Button
+      variant={hasAccent ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "outline"}
+      size="sm"
+      className={cn(
+        "gap-2 rounded-full px-4 font-bold transition-all",
+        hasAccent ? "border-0" : "",
+      )}
+    >
+      <Plus className="w-4 h-4" />
+      {swatchesToSave.length > 1 ? "Save Palette" : "Add to Palette"}
+    </Button>
+  );
+
+  const ListContent = () => (
+    <div className="flex flex-col gap-4 py-4 px-4 md:px-0">
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="New Palette Name..."
+          value={newPaletteName}
+          onChange={(e) => setNewPaletteName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              createAndSave();
+            }
           }}
-          className="flex flex-col gap-6 py-4"
-        >
-          <div className="flex items-center gap-4">
-            <div
-              className="w-12 h-12 rounded-lg border shadow-inner shrink-0"
-              style={{ backgroundColor: `rgb(${swatch.rgb.join(",")})` }}
-            />
-            <div>
-              <p className="font-semibold">{swatch.name}</p>
-              <p className="text-sm text-muted-foreground">{swatch.brand}</p>
-            </div>
-          </div>
+          autoFocus={isDesktop}
+        />
+        <Button size="icon" onClick={createAndSave} disabled={!newPaletteName.trim()}>
+          <Plus className="w-4 h-4" />
+        </Button>
+      </div>
 
-          <div className="space-y-4">
-            {palettes.length > 0 && (
-              <div className="space-y-2">
-                <Label>Select Palette</Label>
-                <Select value={selectedPaletteId} onValueChange={setSelectedPaletteId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a palette..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">-- Create New Palette --</SelectItem>
-                    {palettes.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name} ({p.swatches.length} colors)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      {palettes.length > 0 && (
+        <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-2 pb-4">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 mt-2">
+            Your Palettes
+          </p>
+          {palettes.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => saveToPalette(p.id)}
+              className="group flex items-center justify-between w-full p-4 rounded-xl border bg-card hover:bg-accent hover:border-accent-foreground/20 transition-all text-left shadow-sm hover:shadow-md"
+            >
+              <div className="flex flex-col">
+                <span className="font-semibold group-hover:text-accent-foreground transition-colors">
+                  {p.name}
+                </span>
+                <span className="text-sm text-muted-foreground">{p.swatches.length} colors</span>
               </div>
-            )}
+              <ChevronRight className="w-4 h-4 text-muted-foreground opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
-            {(selectedPaletteId === "new" || palettes.length === 0) && (
-              <div className="space-y-2">
-                <Label htmlFor="name">New Palette Name</Label>
-                <Input
-                  id="name"
-                  value={newPaletteName}
-                  onChange={(e) => setNewPaletteName(e.target.value)}
-                  placeholder="e.g. Living Room, Exterior..."
-                  autoFocus
-                />
-              </div>
-            )}
-          </div>
+  if (isDesktop) {
+    return (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>{DialogTriggerButton}</DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {swatchesToSave.length > 1
+                ? `Save ${swatchesToSave.length} Colors`
+                : "Add to Palette"}
+            </DialogTitle>
+          </DialogHeader>
+          <ListContent />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
-          <Button
-            type="submit"
-            className="w-full mt-2"
-            disabled={selectedPaletteId === "new" && !newPaletteName.trim()}
-          >
-            Save to Palette
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
+  return (
+    <Drawer open={open} onOpenChange={handleOpenChange}>
+      <DrawerTrigger asChild>{DialogTriggerButton}</DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader className="text-left">
+          <DrawerTitle>
+            {swatchesToSave.length > 1 ? `Save ${swatchesToSave.length} Colors` : "Add to Palette"}
+          </DrawerTitle>
+        </DrawerHeader>
+        <ListContent />
+      </DrawerContent>
+    </Drawer>
   );
 }
