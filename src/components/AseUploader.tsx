@@ -1,80 +1,83 @@
-import React, { useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { parseAse, type AseEntry } from '../util/ase-parser';
-
+import React, { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { parseAse, type AseEntry } from "../util/ase-parser";
 
 interface AseUploaderProps {
-    onPaletteLoaded: (palette: AseEntry[]) => void;
-    onError: (error: string) => void;
+  onPaletteLoaded: (palette: AseEntry[]) => void;
+  onError: (error: string) => void;
 }
 
 const AseUploader: React.FC<AseUploaderProps> = ({ onPaletteLoaded, onError }) => {
-    const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (!files || files.length === 0) return;
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
-        const allColors: AseEntry[] = [];
+    const allColors: AseEntry[] = [];
 
-        for (const file of Array.from(files)) {
-            if (!file.name.toLowerCase().endsWith('.ase')) {
-                console.warn(`Skipping non-ase file: ${file.name}`);
-                continue;
-            }
+    for (const file of Array.from(files)) {
+      if (!file.name.toLowerCase().endsWith(".ase")) {
+        console.warn(`Skipping non-ase file: ${file.name}`);
+        continue;
+      }
 
-            try {
-                const result = await new Promise<ArrayBuffer>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
-                    reader.onerror = reject;
-                    reader.readAsArrayBuffer(file);
-                });
+      try {
+        const result = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as ArrayBuffer);
+          reader.onerror = reject;
+          reader.readAsArrayBuffer(file);
+        });
 
-                try {
-                    const decoded = parseAse(result);
-                    allColors.push(...decoded);
-                } catch (decodeErr) {
-                    console.error(`Decoding error for ${file.name}:`, decodeErr);
-                }
-            } catch (err) {
-                console.error(`File reading error for ${file.name}:`, err);
-            }
+        try {
+          const decoded = parseAse(result);
+          allColors.push(...decoded);
+        } catch (decodeErr) {
+          console.error(`Decoding error for ${file.name}:`, decodeErr);
         }
+      } catch (err) {
+        console.error(`File reading error for ${file.name}:`, err);
+      }
+    }
 
-        if (allColors.length > 0) {
-            onPaletteLoaded(allColors);
-        } else {
-            onError('No valid colors found in the uploaded files.');
-        }
+    if (allColors.length > 0) {
+      onPaletteLoaded(allColors);
+    } else {
+      onError("No valid colors found in the uploaded files.");
+    }
 
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    };
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
-    const handleButtonClick = () => {
-        fileInputRef.current?.click();
-    };
+  const handleButtonClick = () => {
+    fileInputRef.current?.click();
+  };
 
-    return (
-        <div className="uploader-container">
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".ase"
-                multiple
-                style={{ display: 'none' }}
-            />
-            <div
-                className="upload-zone p-6 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-slate-800/50 transition-all text-center"
-                onClick={handleButtonClick}
-            >
-                <div className="text-4xl mb-2">📁</div>
-                <p className="text-sm text-slate-400">Click to upload <strong>.ase</strong> files</p>
-                <Button variant="outline" size="sm" className="mt-4 border-slate-700">Select Files</Button>
-            </div>
-        </div>
-    );
+  return (
+    <div className="uploader-container">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".ase"
+        multiple
+        style={{ display: "none" }}
+      />
+      <div
+        className="upload-zone p-6 border-2 border-dashed border-slate-700 rounded-xl cursor-pointer hover:border-indigo-500 hover:bg-slate-800/50 transition-all text-center"
+        onClick={handleButtonClick}
+      >
+        <div className="text-4xl mb-2">📁</div>
+        <p className="text-sm text-slate-400">
+          Click to upload <strong>.ase</strong> files
+        </p>
+        <Button variant="outline" size="sm" className="mt-4 border-slate-700">
+          Select Files
+        </Button>
+      </div>
+    </div>
+  );
 };
 
 export default AseUploader;

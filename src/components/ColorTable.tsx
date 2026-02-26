@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Label } from '@/components/ui/label';
+import { useMemo, useState } from "react";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -7,29 +7,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 
-import type { Swatch } from '@/types/swatch';
-import { ColorFilters } from './ColorFilters';
-import { useColorFilters } from '@/hooks/useColorFilters';
-import SwatchCard from './SwatchCard';
+import type { Swatch } from "@/types/swatch";
+import { ColorFilters } from "./ColorFilters";
+import { useColorFilters } from "@/hooks/useColorFilters";
+import SwatchCard from "./SwatchCard";
 
 interface ColorTableProps {
   colors: Swatch[];
 }
 
 const ColorTable = ({ colors }: ColorTableProps) => {
-  const [sortConfig, setSortConfig] = useState<{ key: string, desc: boolean } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: string; desc: boolean } | null>(null);
 
   const {
-    collectionFilter, setCollectionFilter,
-    hueRange, setHueRange,
-    chromaRange, setChromaRange,
-    lightnessRange, setLightnessRange,
+    collectionFilter,
+    setCollectionFilter,
+    hueRange,
+    setHueRange,
+    chromaRange,
+    setChromaRange,
+    lightnessRange,
+    setLightnessRange,
     collections,
     maxChroma,
     filteredColors,
-    handleReset: baseReset
+    handleReset: baseReset,
   } = useColorFilters(colors);
 
   const handleReset = () => {
@@ -44,17 +48,28 @@ const ColorTable = ({ colors }: ColorTableProps) => {
       let valA: any, valB: any;
 
       switch (sortConfig.key) {
-        case 'name':
-          valA = a.name; valB = b.name; break;
-        case 'brand':
-          valA = a.brand; valB = b.brand; break;
-        case 'hue':
-          valA = a.oklch[2]; valB = b.oklch[2]; break;
-        case 'chroma':
-          valA = a.oklch[1]; valB = b.oklch[1]; break;
-        case 'lightness':
-          valA = a.oklch[0]; valB = b.oklch[0]; break;
-        default: return 0;
+        case "name":
+          valA = a.name;
+          valB = b.name;
+          break;
+        case "brand":
+          valA = a.brand;
+          valB = b.brand;
+          break;
+        case "hue":
+          valA = a.oklch[2];
+          valB = b.oklch[2];
+          break;
+        case "chroma":
+          valA = a.oklch[1];
+          valB = b.oklch[1];
+          break;
+        case "lightness":
+          valA = a.oklch[0];
+          valB = b.oklch[0];
+          break;
+        default:
+          return 0;
       }
 
       if (valA < valB) return sortConfig.desc ? 1 : -1;
@@ -96,14 +111,16 @@ const ColorTable = ({ colors }: ColorTableProps) => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mr-2">Sort By</Label>
+          <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mr-2">
+            Sort By
+          </Label>
           <Select
-            value={sortConfig?.key || 'none'}
+            value={sortConfig?.key || "none"}
             onValueChange={(val) => {
-              if (val === 'none') {
+              if (val === "none") {
                 setSortConfig(null);
               } else {
-                setSortConfig({ key: val, desc: val === 'chroma' || val === 'lightness' });
+                setSortConfig({ key: val, desc: val === "chroma" || val === "lightness" });
               }
             }}
           >
@@ -122,10 +139,7 @@ const ColorTable = ({ colors }: ColorTableProps) => {
         </div>
       </div>
 
-      <div
-        className="relative w-full"
-        style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
-      >
+      <div className="relative w-full" style={{ height: `${rowVirtualizer.getTotalSize()}px` }}>
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const startIndex = virtualRow.index * columns;
           const rowSwatches = sortedColors.slice(startIndex, startIndex + columns);
@@ -140,10 +154,7 @@ const ColorTable = ({ colors }: ColorTableProps) => {
               }}
             >
               {rowSwatches.map((swatch) => (
-                <SwatchCard
-                  key={swatch.id}
-                  swatch={swatch}
-                />
+                <SwatchCard key={swatch.id} swatch={swatch} />
               ))}
             </div>
           );
@@ -152,7 +163,9 @@ const ColorTable = ({ colors }: ColorTableProps) => {
         {sortedColors.length === 0 && (
           <div className="p-24 text-center bg-muted/10 rounded-3xl border-2 border-dashed border-muted/20">
             <div className="text-4xl mb-4 opacity-20">🔍</div>
-            <p className="text-muted-foreground font-medium">No colors match your current filters.</p>
+            <p className="text-muted-foreground font-medium">
+              No colors match your current filters.
+            </p>
           </div>
         )}
       </div>
@@ -160,7 +173,9 @@ const ColorTable = ({ colors }: ColorTableProps) => {
       {sortedColors.length > 0 && rowVirtualizer.getTotalSize() > 0 && (
         <div className="flex flex-col items-center gap-2 pt-12">
           <div className="w-12 h-1 rounded-full bg-border/20 mb-4" />
-          <span className="text-[10px] uppercase tracking-[0.3em] opacity-30 font-black">End of Library</span>
+          <span className="text-[10px] uppercase tracking-[0.3em] opacity-30 font-black">
+            End of Library
+          </span>
         </div>
       )}
     </div>
