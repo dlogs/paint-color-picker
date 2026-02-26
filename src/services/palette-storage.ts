@@ -19,13 +19,24 @@ export function subscribe(listener: Listener) {
   };
 }
 
+let cachedPalettes: Palette[] | null = null;
+let cachedDataString: string | null = null;
+
 export function getPalettes(): Palette[] {
   try {
     const data = localStorage.getItem(PALETTES_STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    if (data === cachedDataString && cachedPalettes !== null) {
+      return cachedPalettes;
+    }
+    cachedDataString = data;
+    cachedPalettes = data ? JSON.parse(data) : [];
+    return cachedPalettes!;
   } catch (e) {
     console.error("Failed to parse palettes from local storage", e);
-    return [];
+    if (!cachedPalettes) {
+      cachedPalettes = [];
+    }
+    return cachedPalettes;
   }
 }
 
