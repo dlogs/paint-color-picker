@@ -177,7 +177,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                   style={{ backgroundColor: `rgb(${color.rgb.join(",")})` }}
                 >
                   {!isShared && (
-                    <div className="absolute top-4 left-4 z-10 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-4 left-4 z-10 flex gap-1">
                       {index > 0 && (
                         <Button
                           variant="ghost"
@@ -209,7 +209,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemove(color.id)}
-                      className={`absolute top-4 right-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10 hover:bg-black/10 focus:opacity-100 ${contrastText}`}
+                      className={`absolute top-4 right-4 z-10 hover:bg-black/10 focus:opacity-100 ${contrastText}`}
                       title="Remove from palette"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -259,7 +259,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                       </div>
                     </div>
 
-                    <div className="mt-6 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <div className="mt-6">
                       <Button
                         asChild
                         variant="outline"
