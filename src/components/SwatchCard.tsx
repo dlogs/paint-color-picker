@@ -106,7 +106,7 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
           swatch={swatch}
           trigger={
             <button
-              className={`p-1.5 rounded-full bg-black/10 hover:bg-black/20 backdrop-blur-md border border-white/10 transition-colors ${textColor}`}
+              className={`p-1.5 rounded-full bg-black/10 hover:bg-black/20 border border-white/10 transition-colors ${textColor}`}
             >
               <Plus className="w-4 h-4" />
             </button>
@@ -131,7 +131,7 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
         {deltaToMain !== null && (
           <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
             <p
-              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/10 backdrop-blur-md border border-white/10 ${textColor}`}
+              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/10 border border-white/10 ${textColor}`}
             >
               ΔE {deltaToMain.toFixed(2)}
             </p>
@@ -160,7 +160,7 @@ const SwatchCard = ({ swatch, activeDimension, mainColor, targetOklch }: SwatchC
 
       {/* Target Debug Info */}
       {deltaToTarget !== null && targetOklch && (
-        <div className="relative z-1 mt-2 p-2 rounded-xl bg-black/5 backdrop-blur-xl border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pointer-events-none">
+        <div className="relative z-1 mt-2 p-2 rounded-xl bg-black/5 border border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pointer-events-none">
           <div className="flex flex-col gap-0.5">
             <p
               className={`text-[10px] font-black uppercase tracking-widest opacity-40 ${textColor}`}

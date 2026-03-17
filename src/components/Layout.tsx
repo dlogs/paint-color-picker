@@ -55,7 +55,7 @@ export const Layout = ({ allColors, accentColor, isDarkAccent }: LayoutProps) =>
                       accentColor ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "outline"
                     }
                     className={cn(
-                      "h-14 px-6 rounded-xl font-bold text-lg gap-2 transition-all backdrop-blur-md",
+                      "h-14 px-6 rounded-xl font-bold text-lg gap-2 transition-all",
                       !accentColor && "bg-card hover:bg-muted border-2",
                     )}
                   >
@@ -81,7 +81,7 @@ export const Layout = ({ allColors, accentColor, isDarkAccent }: LayoutProps) =>
                   accentColor ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "outline"
                 }
                 className={cn(
-                  "h-14 w-14 rounded-xl flex items-center justify-center shrink-0 transition-all backdrop-blur-md",
+                  "h-14 w-14 rounded-xl flex items-center justify-center shrink-0 transition-all",
                   !accentColor && "bg-card hover:bg-muted border-2",
                 )}
               >
@@ -100,7 +100,7 @@ export const Layout = ({ allColors, accentColor, isDarkAccent }: LayoutProps) =>
                       accentColor ? (isDarkAccent ? "adaptiveLight" : "adaptiveDark") : "outline"
                     }
                     className={cn(
-                      "h-14 w-14 rounded-xl flex items-center justify-center shrink-0 transition-all backdrop-blur-md",
+                      "h-14 w-14 rounded-xl flex items-center justify-center shrink-0 transition-all",
                       !accentColor && "bg-card hover:bg-muted border-2",
                     )}
                   >

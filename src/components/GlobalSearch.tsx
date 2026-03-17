@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { cva } from "class-variance-authority";
 
 const searchWrapperVariants = cva(
-  "relative z-40 rounded-xl border-2 shadow-2xl transition-all duration-300 backdrop-blur-md",
+  "relative z-40 rounded-xl border-2 shadow-2xl transition-all duration-300",
   {
     variants: {
       variant: {
@@ -41,7 +41,7 @@ const searchInputVariants = cva("h-14 text-lg", {
 });
 
 const searchDropdownVariants = cva(
-  "absolute top-full left-0 right-0 z-40 mt-2 rounded-xl border-2 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-xl",
+  "absolute top-full left-0 right-0 z-40 mt-2 rounded-xl border-2 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200",
   {
     variants: {
       variant: {

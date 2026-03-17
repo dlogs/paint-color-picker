@@ -220,7 +220,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                     className={`mt-auto p-6 flex flex-col items-center text-center ${contrastText}`}
                   >
                     <span
-                      className={`text-xs font-mono mb-2 px-2 py-1 rounded bg-black/10 backdrop-blur-sm ${contrastBorder}`}
+                      className={`text-xs font-mono mb-2 px-2 py-1 rounded bg-black/10 ${contrastBorder}`}
                     >
                       {color.number}
                     </span>
@@ -263,7 +263,7 @@ export default function PaletteDetail({ allColors }: PaletteDetailProps) {
                       <Button
                         asChild
                         variant="outline"
-                        className="bg-background/20 backdrop-blur hover:bg-background/40 border-0"
+                        className="bg-background/20 hover:bg-background/40 border-0"
                       >
                         <Link to={`/color/${color.id}`}>View Details</Link>
                       </Button>
