@@ -76,7 +76,7 @@ export function AddToPaletteDialog({
     </Button>
   );
 
-  const ListContent = () => (
+  const listContent = (
     <div className="flex flex-col gap-4 py-4 px-4 md:px-0">
       <div className="flex items-center gap-2">
         <Input
@@ -133,7 +133,7 @@ export function AddToPaletteDialog({
                 : "Add to Palette"}
             </DialogTitle>
           </DialogHeader>
-          <ListContent />
+          {listContent}
         </DialogContent>
       </Dialog>
     );
@@ -148,7 +148,7 @@ export function AddToPaletteDialog({
             {swatchesToSave.length > 1 ? `Save ${swatchesToSave.length} Colors` : "Add to Palette"}
           </DrawerTitle>
         </DrawerHeader>
-        <ListContent />
+        {listContent}
       </DrawerContent>
     </Drawer>
   );
