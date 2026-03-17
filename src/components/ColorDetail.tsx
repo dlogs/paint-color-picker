@@ -118,8 +118,8 @@ const ColorDetail = ({ allColors, onAccentChange }: ColorDetailProps) => {
     const [L, C, H] = color.oklch;
     const hLo = (H - 10 + 360) % 360;
     const hHi = (H + 10 + 360) % 360;
-    const cLo = Math.max(0, C - 0.02);
-    const cHi = C + 0.02;
+    const cLo = Math.max(0, C - 0.01);
+    const cHi = C + 0.01;
     const lLo = Math.max(0, L - 0.05);
     const lHi = Math.min(1, L + 0.05);
 
